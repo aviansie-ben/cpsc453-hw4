@@ -40,6 +40,14 @@ namespace hw4 {
         scene.objects().push_back(
             std::unique_ptr<Object>(new SphereObject(0.5, glm::vec3(-0.5, 0.5, 3)))
         );
+        scene.objects().push_back(
+            std::unique_ptr<Object>(new SphereObject(0.1, glm::vec3(0, 0, 2.5)))
+        );
+        scene.objects().push_back(
+            std::unique_ptr<Object>(new SphereObject(1.0, glm::vec3(1.5, 0, 4.75)))
+        );
+
+        scene.regen_bvh();
 
         RayTraceRenderer render(glm::ivec2(80, 60), glm::radians(90.0f));
         Image img = render.render(

@@ -56,22 +56,26 @@ namespace hw4 {
     ) const {
         float depth = std::numeric_limits<float>::infinity();
 
-        for (const auto& o : scene.objects()) {
-            if (o->aabb().intersects(ray)) {
-                float dist_mult;
-                Ray obj_ray = ray.transform(o->inv_transform(), dist_mult);
-                boost::optional<Intersection> intersection = o->find_intersection(obj_ray);
+        scene.bvh().search(ray, [&](auto& n) {
+            for (Object* o : n.objects) {
+                if (o->aabb().intersects(ray)) {
+                    float dist_mult;
+                    Ray obj_ray = ray.transform(o->inv_transform(), dist_mult);
+                    boost::optional<Intersection> intersection = o->find_intersection(obj_ray);
 
-                if (!intersection) continue;
+                    if (!intersection) continue;
 
-                float new_depth = intersection->distance() * dist_mult;
+                    float new_depth = intersection->distance() * dist_mult;
 
-                if (new_depth < depth) {
-                    depth = intersection->distance() * dist_mult;
+                    if (new_depth < depth) {
+                        depth = intersection->distance() * dist_mult;
+                    }
                 }
             }
-        }
+        });
 
-        return glm::vec3(1 - depth / 5.0);
+        auto color = glm::vec3(1 - depth / 5.0);
+
+        return color;
     }
 }
