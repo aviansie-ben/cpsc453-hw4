@@ -31,6 +31,26 @@ namespace hw4 {
         s << std::flush;
     }
 
+    void show_scene(const Scene& scene) {
+        RayTraceRenderer render(glm::ivec2(160, 120), glm::radians(90.0f), 5);
+        Image img = render.render(
+            scene,
+            glm::mat4()
+        );
+
+        print_image(img, std::cout);
+    }
+
+    void render_scene(const Scene& scene) {
+        RayTraceRenderer render(glm::ivec2(640, 480), glm::radians(90.0f), 5);
+        Image img = render.render(
+            scene,
+            glm::mat4()
+        );
+
+        img.save_as_ppm("test.ppm");
+    }
+
     extern "C" int main(int argc, char** argv) {
         Scene scene;
 
@@ -72,13 +92,8 @@ namespace hw4 {
 
         scene.regen_bvh();
 
-        RayTraceRenderer render(glm::ivec2(160, 120), glm::radians(90.0f), 5);
-        Image img = render.render(
-            scene,
-            glm::mat4()
-        );
-
-        print_image(img, std::cout);
+        show_scene(scene);
+        render_scene(scene);
 
         return 0;
     }

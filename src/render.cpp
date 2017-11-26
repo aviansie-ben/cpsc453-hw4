@@ -1,10 +1,38 @@
 #include <cmath>
 #include <iostream>
 #include <limits>
+#include <sstream>
+#include <stdexcept>
 
 #include "render.hpp"
 
 namespace hw4 {
+    void Image::save_as_ppm(const boost::filesystem::path& path) const {
+        boost::filesystem::ofstream f(path);
+
+        if (!f) {
+            throw std::runtime_error(([&]() {
+                std::ostringstream ss;
+
+                ss << "Failed to open " << path.native() << " for writing!";
+
+                return ss.str();
+            })());
+        }
+
+        f << "P3\n" << this->m_size.x << " " << this->m_size.y << " 255\n";
+
+        for (int y = 0; y < this->m_size.y; y++) {
+            for (int x = 0; x < this->m_size.x; x++) {
+                const auto& p = this->m_data[x + (y * this->m_size.x)];
+
+                f << static_cast<int>(p.r) << " "
+                  << static_cast<int>(p.g) << " "
+                  << static_cast<int>(p.b) << "\n";
+            }
+        }
+    }
+
     Image RayTraceRenderer::render(const Scene& scene, const glm::mat4& view_matrix) const {
         float img_plane_distance = this->m_size.x / (std::tan(this->m_hfov / 2) * 2.0f);
 

@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <memory>
 
+#include <boost/filesystem.hpp>
 #include <glm/glm.hpp>
 
 #include "scene.hpp"
@@ -19,6 +20,7 @@ namespace hw4 {
         glm::ivec2 m_size;
         std::unique_ptr<pixel[]> m_data;
     public:
+        Image() : m_size(glm::ivec2(0)), m_data(nullptr) {}
         Image(glm::ivec2 size)
             : m_size(size), m_data(std::make_unique<pixel[]>(size.x * size.y)) {}
 
@@ -75,6 +77,8 @@ namespace hw4 {
 
             return *this;
         }
+
+        void save_as_ppm(const boost::filesystem::path& path) const;
     };
 
     class RayTraceRenderer {
