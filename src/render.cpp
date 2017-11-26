@@ -1,8 +1,13 @@
 #include <cmath>
+#include <condition_variable>
+#include <exception>
 #include <iostream>
 #include <limits>
+#include <mutex>
+#include <queue>
 #include <sstream>
 #include <stdexcept>
+#include <thread>
 
 #include "render.hpp"
 
@@ -33,16 +38,109 @@ namespace hw4 {
         }
     }
 
+    struct PatchJob {
+        glm::ivec2 pos;
+        glm::ivec2 size;
+    };
+
+    struct PatchJobResult {
+        PatchJob job;
+        Image img;
+    };
+
+    static void create_patch_jobs(
+        std::queue<PatchJob>& job_queue,
+        glm::ivec2 image_size,
+        glm::ivec2 patch_size
+    ) {
+        for (int y = 0; y < image_size.y; y += patch_size.y) {
+            for (int x = 0; x < image_size.x; x += patch_size.x) {
+                glm::ivec2 size = glm::ivec2(
+                    std::min(patch_size.x, image_size.x - x),
+                    std::min(patch_size.y, image_size.y - y)
+                );
+
+                job_queue.push(PatchJob { .pos = glm::ivec2(x, y), .size = size });
+            }
+        }
+    }
+
     Image RayTraceRenderer::render(const Scene& scene, const glm::mat4& view_matrix) const {
         float img_plane_distance = this->m_size.x / (std::tan(this->m_hfov / 2) * 2.0f);
+        auto inv_view_matrix = glm::inverse(view_matrix);
 
-        return this->render_patch(
-            scene,
-            glm::inverse(view_matrix),
-            img_plane_distance,
-            glm::ivec2(0, 0),
-            this->m_size
-        );
+        std::mutex mut;
+        std::condition_variable cv;
+        std::queue<PatchJob> job_queue;
+        int remaining_jobs;
+        std::queue<PatchJobResult> result_queue;
+        std::vector<std::thread> threads;
+
+        create_patch_jobs(job_queue, this->m_size, glm::ivec2(8, 8));
+        remaining_jobs = job_queue.size();
+
+        for (int i = 0; i < 4; i++) {
+            threads.push_back(std::thread([&]() {
+                PatchJob job;
+
+                {
+                    std::unique_lock<std::mutex> lock(mut);
+
+                    if (job_queue.empty()) return;
+                    job = std::move(job_queue.front());
+                    job_queue.pop();
+                }
+
+                while (true) {
+                    Image img = this->render_patch(
+                        scene,
+                        inv_view_matrix,
+                        img_plane_distance,
+                        job.pos,
+                        job.size
+                    );
+
+                    {
+                        std::unique_lock<std::mutex> lock(mut);
+
+                        result_queue.push(PatchJobResult {
+                            .job = job,
+                            .img = std::move(img)
+                        });
+                        cv.notify_all();
+
+                        if (job_queue.empty()) return;
+                        job = std::move(job_queue.front());
+                        job_queue.pop();
+                    }
+                }
+            }));
+        }
+
+        Image img(this->m_size);
+
+        while (true) {
+            PatchJobResult r;
+
+            {
+                std::unique_lock<std::mutex> lock(mut);
+
+                if (remaining_jobs <= 0) break;
+                while (result_queue.empty()) cv.wait(lock);
+
+                r = std::move(result_queue.front());
+                result_queue.pop();
+                remaining_jobs--;
+            }
+
+            img.copy_data(r.img, r.job.pos);
+        }
+
+        for (auto& t : threads) {
+            t.join();
+        }
+
+        return std::move(img);
     }
 
     Image RayTraceRenderer::render_patch(
@@ -76,7 +174,7 @@ namespace hw4 {
                     std::pow(color.b, 1.0/2.2)
                 );
 
-                img.set_pixel(ipos, color);
+                img.set_pixel(ipos - start, color);
             }
         }
 
