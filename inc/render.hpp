@@ -80,9 +80,10 @@ namespace hw4 {
     class RayTraceRenderer {
         glm::ivec2 m_size;
         float m_hfov;
+        int m_max_recursion;
     public:
-        RayTraceRenderer(glm::ivec2 size, float hfov)
-            : m_size(size), m_hfov(hfov) {}
+        RayTraceRenderer(glm::ivec2 size, float hfov, int max_recursion)
+            : m_size(size), m_hfov(hfov), m_max_recursion(max_recursion) {}
 
         glm::ivec2 size() const { return this->m_size; }
         float hfov() const { return this->m_hfov; }
@@ -98,8 +99,15 @@ namespace hw4 {
         glm::vec3 render_ray(
             const Scene& scene,
             const Ray& ray
-        ) const;
+        ) const {
+            return this->render_ray(scene, ray, 0);
+        }
     private:
+        glm::vec3 render_ray(
+            const Scene& scene,
+            const Ray& ray,
+            int recursion
+        ) const;
         glm::vec3 render_point_light(
             const Scene& scene,
             const Ray& ray,

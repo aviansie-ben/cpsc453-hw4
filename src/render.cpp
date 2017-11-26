@@ -29,21 +29,26 @@ namespace hw4 {
         for (int y = 0; y < size.y; y++) {
             for (int x = 0; x < size.x; x++) {
                 auto ipos = glm::ivec2(start.x + x, start.y + y);
-
-                img.set_pixel(
-                    ipos,
-                    this->render_ray(
-                        scene,
-                        inv_view_matrix * Ray::between(
-                            glm::vec3(0),
-                            glm::vec3(
-                                ipos.x + 0.5 - this->m_size.x / 2,
-                                -ipos.y - 0.5 + this->m_size.y / 2,
-                                img_plane_distance
-                            )
+                auto color = this->render_ray(
+                    scene,
+                    inv_view_matrix * Ray::between(
+                        glm::vec3(0),
+                        glm::vec3(
+                            ipos.x + 0.5 - this->m_size.x / 2,
+                            -ipos.y - 0.5 + this->m_size.y / 2,
+                            img_plane_distance
                         )
                     )
                 );
+
+                // Perform gamma correction
+                color = glm::vec3(
+                    std::pow(color.r, 1.0/2.2),
+                    std::pow(color.g, 1.0/2.2),
+                    std::pow(color.b, 1.0/2.2)
+                );
+
+                img.set_pixel(ipos, color);
             }
         }
 
@@ -52,8 +57,11 @@ namespace hw4 {
 
     glm::vec3 RayTraceRenderer::render_ray(
         const Scene& scene,
-        const Ray& ray
+        const Ray& ray,
+        int recursion
     ) const {
+        if (recursion > this->m_max_recursion) return glm::vec3(0);
+
         float depth = std::numeric_limits<float>::infinity();
         Intersection i;
 
@@ -84,12 +92,15 @@ namespace hw4 {
                 result += this->render_point_light(scene, ray, i, mat, *plight);
             }
 
-            // Perform gamma correction
-            return glm::vec3(
-                std::pow(result.r, 1.0/2.2),
-                std::pow(result.g, 1.0/2.2),
-                std::pow(result.b, 1.0/2.2)
-            );
+            if (mat.reflectance > 0) {
+                result += mat.reflectance * this->render_ray(
+                    scene,
+                    Ray(i.point(), glm::reflect(ray.direction(), i.normal())).adjust(0.001f),
+                    recursion + 1
+                );
+            }
+
+            return result;
         } else {
             return glm::vec3(0);
         }

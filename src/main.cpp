@@ -39,23 +39,26 @@ namespace hw4 {
                 glm::vec3(0.7, 0.3, 0.3),
                 glm::vec3(0.7, 0.3, 0.3),
                 glm::vec3(1),
-                100
+                10
+            ));
+            auto mat2 = std::make_shared<Material>(Material::reflective(
+                Material::diffuse(
+                    glm::vec3(0, 0, 0.3),
+                    glm::vec3(0, 0, 0.3),
+                    glm::vec3(1),
+                    500
+                ),
+                0.1
             ));
 
             scene.objects().push_back(
-                std::unique_ptr<Object>(new SphereObject(1.5, glm::vec3(0, -0.5, 4.5), mat))
+                std::unique_ptr<Object>(new SphereObject(1.5, glm::vec3(0, -0.5, 4.5), mat2))
             );
             scene.objects().push_back(
-                std::unique_ptr<Object>(new SphereObject(0.5, glm::vec3(2, -0.5, 4.5), mat))
+                std::unique_ptr<Object>(new SphereObject(0.5, glm::vec3(-0.5, 0.5, 2), mat))
             );
             scene.objects().push_back(
-                std::unique_ptr<Object>(new SphereObject(0.5, glm::vec3(-0.5, 0.5, 3), mat))
-            );
-            scene.objects().push_back(
-                std::unique_ptr<Object>(new SphereObject(0.1, glm::vec3(0, 0, 2.5), mat))
-            );
-            scene.objects().push_back(
-                std::unique_ptr<Object>(new SphereObject(1.0, glm::vec3(1.5, 0, 4.75), mat))
+                std::unique_ptr<Object>(new SphereObject(0.3, glm::vec3(1.5, -1, 3), mat))
             );
 
             scene.point_lights().push_back(std::make_unique<PointLight>(
@@ -69,7 +72,7 @@ namespace hw4 {
 
         scene.regen_bvh();
 
-        RayTraceRenderer render(glm::ivec2(160, 120), glm::radians(90.0f));
+        RayTraceRenderer render(glm::ivec2(160, 120), glm::radians(90.0f), 5);
         Image img = render.render(
             scene,
             glm::mat4()
