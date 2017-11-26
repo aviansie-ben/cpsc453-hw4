@@ -1,12 +1,19 @@
-#include "object.hpp"
+#include <cmath>
 
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "object.hpp"
+
 namespace hw4 {
-    SphereObject::SphereObject(float radius, glm::vec3 center)
+    SphereObject::SphereObject(
+        float radius,
+        glm::vec3 center,
+        const std::shared_ptr<Material>& material
+    )
         : Object(
             BoundingBox(glm::vec3(-1), glm::vec3(1)),
-            glm::scale(glm::translate(glm::mat4(1.0), center), glm::vec3(radius))
+            glm::scale(glm::translate(glm::mat4(1.0), center), glm::vec3(radius)),
+            material
         ) {}
 
     boost::optional<Intersection> SphereObject::find_intersection(const Ray& r) const {
@@ -28,6 +35,11 @@ namespace hw4 {
         return Intersection(
             p,
             p,
+            glm::vec2(
+                0.5 + std::atan2(p.z, p.x) / tau,
+                0.5 + std::asin(p.y) * 2 / tau
+            ),
+            this->material(),
             t
         );
     }

@@ -99,6 +99,15 @@ namespace hw4 {
             const Scene& scene,
             const Ray& ray
         ) const;
+    private:
+        glm::vec3 render_point_light(
+            const Scene& scene,
+            const Ray& ray,
+            const Intersection& intersection,
+            const PointMaterial& material,
+            const PointLight& point_light
+        ) const;
+        bool is_visible(const Scene& scene, glm::vec3 from, glm::vec3 to) const;
     };
 }
 

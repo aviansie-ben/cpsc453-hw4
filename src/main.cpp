@@ -34,22 +34,42 @@ namespace hw4 {
     extern "C" int main(int argc, char** argv) {
         Scene scene;
 
-        scene.objects().push_back(
-            std::unique_ptr<Object>(new SphereObject(1.5, glm::vec3(0, -0.5, 4.5)))
-        );
-        scene.objects().push_back(
-            std::unique_ptr<Object>(new SphereObject(0.5, glm::vec3(-0.5, 0.5, 3)))
-        );
-        scene.objects().push_back(
-            std::unique_ptr<Object>(new SphereObject(0.1, glm::vec3(0, 0, 2.5)))
-        );
-        scene.objects().push_back(
-            std::unique_ptr<Object>(new SphereObject(1.0, glm::vec3(1.5, 0, 4.75)))
-        );
+        {
+            auto mat = std::make_shared<Material>(Material::diffuse(
+                glm::vec3(0.7, 0.3, 0.3),
+                glm::vec3(0.7, 0.3, 0.3),
+                glm::vec3(1),
+                100
+            ));
+
+            scene.objects().push_back(
+                std::unique_ptr<Object>(new SphereObject(1.5, glm::vec3(0, -0.5, 4.5), mat))
+            );
+            scene.objects().push_back(
+                std::unique_ptr<Object>(new SphereObject(0.5, glm::vec3(2, -0.5, 4.5), mat))
+            );
+            scene.objects().push_back(
+                std::unique_ptr<Object>(new SphereObject(0.5, glm::vec3(-0.5, 0.5, 3), mat))
+            );
+            scene.objects().push_back(
+                std::unique_ptr<Object>(new SphereObject(0.1, glm::vec3(0, 0, 2.5), mat))
+            );
+            scene.objects().push_back(
+                std::unique_ptr<Object>(new SphereObject(1.0, glm::vec3(1.5, 0, 4.75), mat))
+            );
+
+            scene.point_lights().push_back(std::make_unique<PointLight>(
+                glm::vec3(-2, 0, 1),
+                glm::vec3(0.005),
+                glm::vec3(0.2),
+                glm::vec3(0.5),
+                glm::vec3(1, 0, 0.3)
+            ));
+        }
 
         scene.regen_bvh();
 
-        RayTraceRenderer render(glm::ivec2(80, 60), glm::radians(90.0f));
+        RayTraceRenderer render(glm::ivec2(160, 120), glm::radians(90.0f));
         Image img = render.render(
             scene,
             glm::mat4()

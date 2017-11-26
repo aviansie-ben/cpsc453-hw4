@@ -55,6 +55,7 @@ namespace hw4 {
         const Ray& ray
     ) const {
         float depth = std::numeric_limits<float>::infinity();
+        Intersection i;
 
         scene.bvh().search(ray, [&](auto& n) {
             for (Object* o : n.objects) {
@@ -69,13 +70,81 @@ namespace hw4 {
 
                     if (new_depth < depth) {
                         depth = intersection->distance() * dist_mult;
+                        i = intersection->transform(o->transform(), dist_mult);
                     }
                 }
             }
         });
 
-        auto color = glm::vec3(1 - depth / 5.0);
+        if (depth != std::numeric_limits<float>::infinity()) {
+            auto mat = i.material();
+            auto result = glm::vec3();
 
-        return color;
+            for (const auto& plight : scene.point_lights()) {
+                result += this->render_point_light(scene, ray, i, mat, *plight);
+            }
+
+            // Perform gamma correction
+            return glm::vec3(
+                std::pow(result.r, 1.0/2.2),
+                std::pow(result.g, 1.0/2.2),
+                std::pow(result.b, 1.0/2.2)
+            );
+        } else {
+            return glm::vec3(0);
+        }
+    }
+
+    glm::vec3 RayTraceRenderer::render_point_light(
+        const Scene& scene,
+        const Ray& ray,
+        const Intersection& i,
+        const PointMaterial& mat,
+        const PointLight& plight
+    ) const {
+        glm::vec3 result;
+
+        float attenuation = plight.attenuation(glm::distance(plight.pos(), i.point()));
+
+        result += plight.ambient() * mat.ambient;
+
+        if (this->is_visible(scene, i.point(), plight.pos())) {
+            glm::vec3 obj_to_light = glm::normalize(plight.pos() - i.point());
+
+            result += std::max(glm::dot(i.normal(), obj_to_light), 0.0f)
+                * plight.diffuse()
+                * mat.diffuse;
+
+            result += std::pow(std::max(glm::dot(-ray.direction(), glm::reflect(-obj_to_light, i.normal())), 0.0f), mat.shininess)
+                * plight.specular()
+                * mat.specular;
+        }
+
+        return result * attenuation;
+    }
+
+    bool RayTraceRenderer::is_visible(const Scene& scene, glm::vec3 from, glm::vec3 to) const {
+        Ray ray = Ray::between(from, to).adjust(0.001f);
+        float dist = std::max(glm::distance(from, to) - 0.001f, 0.0f);
+        bool occluded = false;
+
+        // TODO Optimize this
+        scene.bvh().search(ray, [&](auto& n) {
+            for (Object* o : n.objects) {
+                if (o->aabb().intersects(ray)) {
+                    float dist_mult;
+                    Ray obj_ray = ray.transform(o->inv_transform(), dist_mult);
+                    boost::optional<Intersection> intersection = o->find_intersection(obj_ray);
+
+                    if (!intersection) continue;
+
+                    if (intersection->distance() * dist_mult <= dist) {
+                        occluded = true;
+                    }
+                }
+            }
+        });
+
+        return !occluded;
     }
 }
