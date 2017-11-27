@@ -32,7 +32,7 @@ namespace hw4 {
     }
 
     void show_scene(const Scene& scene) {
-        RayTraceRenderer render(glm::ivec2(160, 120), glm::radians(90.0f), 5);
+        RayTraceRenderer render(glm::ivec2(160, 120), glm::radians(90.0f), 5, 4);
         Image img = render.render(
             scene,
             glm::mat4()
@@ -42,7 +42,7 @@ namespace hw4 {
     }
 
     void render_scene(const Scene& scene) {
-        RayTraceRenderer render(glm::ivec2(640, 480), glm::radians(90.0f), 5);
+        RayTraceRenderer render(glm::ivec2(640, 480), glm::radians(90.0f), 5, 4);
         Image img = render.render(
             scene,
             glm::mat4()

@@ -85,20 +85,36 @@ namespace hw4 {
         glm::ivec2 m_size;
         float m_hfov;
         int m_max_recursion;
+        int m_supersample_level;
+
+        float m_img_plane_distance;
+        float m_sample_spacing;
+        float m_sample_mult;
+
+        void update_params();
     public:
-        RayTraceRenderer(glm::ivec2 size, float hfov, int max_recursion)
-            : m_size(size), m_hfov(hfov), m_max_recursion(max_recursion) {}
+        RayTraceRenderer(glm::ivec2 size, float hfov, int max_recursion, int supersample_level)
+            : m_size(size), m_hfov(hfov), m_max_recursion(max_recursion),
+              m_supersample_level(supersample_level) {
+            this->update_params();
+        }
 
         glm::ivec2 size() const { return this->m_size; }
         float hfov() const { return this->m_hfov; }
+        int max_recursion() const { return this->m_max_recursion; }
+        int supersample_level() const { return this->m_supersample_level; }
 
         Image render(const Scene& scene, const glm::mat4& view_matrix) const;
         Image render_patch(
             const Scene& scene,
             const glm::mat4& inv_view_matrix,
-            float image_plane_distance,
             glm::ivec2 start,
             glm::ivec2 size
+        ) const;
+        glm::vec3 render_pixel(
+            const Scene& scene,
+            const glm::mat4& inv_view_matrix,
+            glm::ivec2 pos
         ) const;
         glm::vec3 render_ray(
             const Scene& scene,

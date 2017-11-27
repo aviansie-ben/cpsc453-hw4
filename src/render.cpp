@@ -38,6 +38,12 @@ namespace hw4 {
         }
     }
 
+    void RayTraceRenderer::update_params() {
+        this->m_img_plane_distance = this->m_size.x / (std::tan(this->m_hfov / 2) * 2.0f);
+        this->m_sample_spacing = 1.0 / (this->m_supersample_level + 1);
+        this->m_sample_mult = 1.0 / (this->m_supersample_level * this->m_supersample_level);
+    }
+
     struct PatchJob {
         glm::ivec2 pos;
         glm::ivec2 size;
@@ -66,7 +72,6 @@ namespace hw4 {
     }
 
     Image RayTraceRenderer::render(const Scene& scene, const glm::mat4& view_matrix) const {
-        float img_plane_distance = this->m_size.x / (std::tan(this->m_hfov / 2) * 2.0f);
         auto inv_view_matrix = glm::inverse(view_matrix);
 
         std::mutex mut;
@@ -95,7 +100,6 @@ namespace hw4 {
                     Image img = this->render_patch(
                         scene,
                         inv_view_matrix,
-                        img_plane_distance,
                         job.pos,
                         job.size
                     );
@@ -146,7 +150,6 @@ namespace hw4 {
     Image RayTraceRenderer::render_patch(
         const Scene& scene,
         const glm::mat4& inv_view_matrix,
-        float img_plane_distance,
         glm::ivec2 start,
         glm::ivec2 size
     ) const {
@@ -154,17 +157,10 @@ namespace hw4 {
 
         for (int y = 0; y < size.y; y++) {
             for (int x = 0; x < size.x; x++) {
-                auto ipos = glm::ivec2(start.x + x, start.y + y);
-                auto color = this->render_ray(
+                auto color = this->render_pixel(
                     scene,
-                    inv_view_matrix * Ray::between(
-                        glm::vec3(0),
-                        glm::vec3(
-                            ipos.x + 0.5 - this->m_size.x / 2,
-                            -ipos.y - 0.5 + this->m_size.y / 2,
-                            img_plane_distance
-                        )
-                    )
+                    inv_view_matrix,
+                    start + glm::ivec2(x, y)
                 );
 
                 // Perform gamma correction
@@ -174,11 +170,36 @@ namespace hw4 {
                     std::pow(color.b, 1.0/2.2)
                 );
 
-                img.set_pixel(ipos - start, color);
+                img.set_pixel(glm::ivec2(x, y), color);
             }
         }
 
         return std::move(img);
+    }
+
+    glm::vec3 RayTraceRenderer::render_pixel(
+        const Scene& scene,
+        const glm::mat4& inv_view_matrix,
+        glm::ivec2 ipos
+    ) const {
+        glm::vec3 result;
+
+        for (int y = 0; y < this->m_supersample_level; y++) {
+            for (int x = 0; x < this->m_supersample_level; x++) {
+                auto pos = glm::vec3(
+                    ipos.x + this->m_sample_spacing * (x + 1) - this->m_size.x / 2,
+                    -(ipos.y + this->m_sample_spacing * (y + 1) - this->m_size.y / 2),
+                    this->m_img_plane_distance
+                );
+
+                result += this->render_ray(
+                    scene,
+                    inv_view_matrix * Ray::between(glm::vec3(0), pos)
+                );
+            }
+        }
+
+        return result * this->m_sample_mult;
     }
 
     glm::vec3 RayTraceRenderer::render_ray(
