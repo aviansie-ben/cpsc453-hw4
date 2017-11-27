@@ -40,13 +40,17 @@ namespace hw4 {
         float distance() const { return this->m_distance; }
 
         PointMaterial material() const { return this->m_material->at_point(this->m_texcoord); }
+        Intersection& material(std::shared_ptr<Material> material) {
+            this->m_material = material;
+            return *this;
+        }
 
         Intersection transform(const glm::mat4& transform, float dist_mult) const {
             return Intersection(
                 glm::vec3(transform * glm::vec4(this->m_point, 1)),
-                // Since we only allow orthogonal transformations and translations, we
-                // can just use the transpose here.
-                glm::normalize(glm::transpose(glm::mat3(transform)) * this->m_normal),
+                // Since we only allow orthogonal transformations and translations, we can just use
+                // the transform directly.
+                glm::normalize(glm::mat3(transform) * this->m_normal),
                 this->m_texcoord,
                 this->m_material,
                 this->m_distance * dist_mult
@@ -98,6 +102,79 @@ namespace hw4 {
             glm::vec3 center,
             const std::shared_ptr<Material>& material
         );
+
+        virtual boost::optional<Intersection> find_intersection(const Ray& r) const;
+    };
+
+    struct Vertex {
+        glm::vec3 pos;
+        glm::vec3 normal;
+        glm::vec2 texcoord;
+    };
+
+    struct Triangle {
+        unsigned int a;
+        unsigned int b;
+        unsigned int c;
+    };
+
+    class TriMesh {
+        std::vector<Vertex> m_vertices;
+        std::vector<Triangle> m_triangles;
+        BVH<Triangle> m_bvh;
+
+        BoundingBox calc_triangle_bounding_box(const Triangle& t) {
+            const auto& a = this->m_vertices[t.a].pos;
+            const auto& b = this->m_vertices[t.b].pos;
+            const auto& c = this->m_vertices[t.c].pos;
+
+            return BoundingBox(
+                glm::vec3(
+                    std::min(a.x, std::min(b.x, c.x)),
+                    std::min(a.y, std::min(b.y, c.y)),
+                    std::min(a.z, std::min(b.z, c.z))
+                ),
+                glm::vec3(
+                    std::max(a.x, std::max(b.x, c.x)),
+                    std::max(a.y, std::max(b.y, c.y)),
+                    std::max(a.z, std::max(b.z, c.z))
+                )
+            );
+        }
+    public:
+        TriMesh(std::vector<Vertex> vertices, std::vector<Triangle> triangles)
+            : m_vertices(std::move(vertices)), m_triangles(std::move(triangles)),
+              m_bvh(BVH<Triangle>::construct(
+                  ([this]() {
+                      std::vector<Triangle*> ts;
+
+                      for (auto& t : this->m_triangles) {
+                          ts.push_back(&t);
+                      }
+
+                      return std::move(ts);
+                  })(),
+                  [this](const auto& t) { return this->calc_triangle_bounding_box(t); }
+              )) {}
+
+        const BoundingBox& obb() const { return this->m_bvh.root()->box; }
+
+        const std::vector<Vertex>& vertices() const { return this->m_vertices; }
+        const std::vector<Triangle>& triangles() const { return this->m_triangles; }
+        const BVH<Triangle>& bvh() const { return this->m_bvh; }
+
+        boost::optional<Intersection> find_intersection(const Ray& r, const Triangle& t) const;
+        boost::optional<Intersection> find_intersection(const Ray& r) const;
+    };
+
+    class TriMeshObject : public Object {
+        std::shared_ptr<TriMesh> m_mesh;
+    public:
+        TriMeshObject(
+            std::shared_ptr<TriMesh> mesh,
+            const glm::mat4& transform,
+            const std::shared_ptr<Material>& material
+        ) : Object(mesh->obb(), transform, material), m_mesh(std::move(mesh)) {}
 
         virtual boost::optional<Intersection> find_intersection(const Ray& r) const;
     };

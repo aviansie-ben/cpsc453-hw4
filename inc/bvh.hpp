@@ -96,8 +96,8 @@ namespace hw4 {
         }
 
         static BVH<T> construct(
-            std::vector<T*>& objects,
-            std::function<const BoundingBox& (const T&)> aabb
+            const std::vector<T*>& objects,
+            std::function<BoundingBox (const T&)> aabb
         ) {
             if (objects.empty()) return BVH<T>();
 

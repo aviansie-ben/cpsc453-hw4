@@ -33,7 +33,7 @@ namespace hw4 {
 
             this->m_bvh = BVH<Object>::construct(
                 objects,
-                [](const auto& o) -> const auto& { return o.aabb(); }
+                [](const auto& o) { return o.aabb(); }
             );
 
             return *this;
