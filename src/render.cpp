@@ -1,3 +1,4 @@
+#include <chrono>
 #include <cmath>
 #include <condition_variable>
 #include <exception>
@@ -71,18 +72,24 @@ namespace hw4 {
         }
     }
 
-    Image RayTraceRenderer::render(const Scene& scene, const glm::mat4& view_matrix) const {
+    Image RayTraceRenderer::render(
+        const Scene& scene,
+        const glm::mat4& view_matrix,
+        std::function<void (float)> progress_callback
+    ) const {
         auto inv_view_matrix = glm::inverse(view_matrix);
+        auto next_progress_update = std::chrono::steady_clock::now() + std::chrono::milliseconds(100);
 
         std::mutex mut;
         std::condition_variable cv;
         std::queue<PatchJob> job_queue;
+        int total_jobs;
         int remaining_jobs;
         std::queue<PatchJobResult> result_queue;
         std::vector<std::thread> threads;
 
         create_patch_jobs(job_queue, this->m_size, glm::ivec2(8, 8));
-        remaining_jobs = job_queue.size();
+        total_jobs = remaining_jobs = job_queue.size();
 
         for (int i = 0; i < 4; i++) {
             threads.push_back(std::thread([&]() {
@@ -130,7 +137,20 @@ namespace hw4 {
                 std::unique_lock<std::mutex> lock(mut);
 
                 if (remaining_jobs <= 0) break;
-                while (result_queue.empty()) cv.wait(lock);
+
+                if (std::chrono::steady_clock::now() >= next_progress_update) {
+                    progress_callback(static_cast<float>(total_jobs - remaining_jobs) / total_jobs);
+                    next_progress_update = std::chrono::steady_clock::now() + std::chrono::milliseconds(100);
+                }
+
+                while (result_queue.empty()) {
+                    cv.wait_for(lock, std::chrono::milliseconds(50));
+
+                    if (std::chrono::steady_clock::now() >= next_progress_update) {
+                        progress_callback(static_cast<float>(total_jobs - remaining_jobs) / total_jobs);
+                        next_progress_update = std::chrono::steady_clock::now() + std::chrono::milliseconds(100);
+                    }
+                }
 
                 r = std::move(result_queue.front());
                 result_queue.pop();

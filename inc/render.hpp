@@ -2,6 +2,7 @@
 #define Hw4_RENDER_HPP
 
 #include <algorithm>
+#include <functional>
 #include <memory>
 
 #include <boost/filesystem.hpp>
@@ -104,7 +105,11 @@ namespace hw4 {
         int max_recursion() const { return this->m_max_recursion; }
         int supersample_level() const { return this->m_supersample_level; }
 
-        Image render(const Scene& scene, const glm::mat4& view_matrix) const;
+        Image render(
+            const Scene& scene,
+            const glm::mat4& view_matrix,
+            std::function<void (float)> progress_callback
+        ) const;
         Image render_patch(
             const Scene& scene,
             const glm::mat4& inv_view_matrix,

@@ -1,5 +1,9 @@
+#include <atomic>
+#include <chrono>
+#include <future>
 #include <iomanip>
 #include <iostream>
+#include <sstream>
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -31,11 +35,106 @@ namespace hw4 {
         s << std::flush;
     }
 
+    void wait_with_spinner(const std::future<void>& f) {
+        int state = 0;
+
+        std::cout << " ";
+
+        do {
+            switch (state) {
+            case 0:
+                std::cout << "-";
+                break;
+            case 1:
+                std::cout << "\\";
+                break;
+            case 2:
+                std::cout << "|";
+                break;
+            case 3:
+                std::cout << "/";
+                break;
+            }
+
+            std::cout << "\033[1D" << std::flush;
+
+            state++;
+            if (state == 4) state = 0;
+        } while (f.wait_for(std::chrono::milliseconds(250)) == std::future_status::timeout);
+
+        std::cout << "DONE" << std::endl;
+    }
+
+    void wait_with_spinner_and_progress(
+        const std::future<void>& f,
+        const std::function<float ()>& progress_fn
+    ) {
+        int state = 0;
+
+        std::cout << " ";
+
+        do {
+            std::ostringstream ss;
+
+            switch (state) {
+            case 0:
+                ss << "-";
+                break;
+            case 1:
+                ss << "\\";
+                break;
+            case 2:
+                ss << "|";
+                break;
+            case 3:
+                ss << "/";
+                break;
+            }
+
+            ss << " ["
+               << std::fixed << std::setprecision(2) << std::setw(6) << progress_fn() * 100
+               << "%]";
+
+            std::cout << "\033[K" << ss.str();
+            std::cout << "\033[" << ss.str().size() << "D" << std::flush;
+
+            state++;
+            if (state == 4) state = 0;
+        } while (f.wait_for(std::chrono::milliseconds(250)) == std::future_status::timeout);
+
+        std::cout << "\033[KDONE" << std::endl;
+    }
+
+    void render_with_progress(
+        const RayTraceRenderer& r,
+        const Scene& s,
+        const glm::mat4& vm,
+        Image& i
+    ) {
+        std::atomic<float> progress(0);
+
+        wait_with_spinner_and_progress(
+            std::async([&]() {
+                i = r.render(s, vm, [&](float p) {
+                    progress.store(p);
+                });
+            }),
+            [&]() {
+                return progress.load();
+            }
+        );
+    }
+
     void show_scene(const Scene& scene) {
-        RayTraceRenderer render(glm::ivec2(160, 120), glm::radians(90.0f), 5, 4);
-        Image img = render.render(
+        RayTraceRenderer render(glm::ivec2(160, 120), glm::radians(90.0f), 5, 2);
+        Image img;
+
+        std::cout << "Generating preview...";
+        render_with_progress(
+            render,
             scene,
-            glm::mat4()
+            glm::mat4(),
+            img
         );
 
         print_image(img, std::cout);
@@ -43,9 +142,14 @@ namespace hw4 {
 
     void render_scene(const Scene& scene) {
         RayTraceRenderer render(glm::ivec2(640, 480), glm::radians(90.0f), 5, 4);
-        Image img = render.render(
+        Image img;
+
+        std::cout << "Generating full-size image...";
+        render_with_progress(
+            render,
             scene,
-            glm::mat4()
+            glm::mat4(),
+            img
         );
 
         img.save_as_ppm("test.ppm");
@@ -117,7 +221,7 @@ namespace hw4 {
         )));
 
         scene.point_lights().push_back(std::make_unique<PointLight>(
-            glm::vec3(0, 2, 1),
+            glm::vec3(0, 1, 1),
             glm::vec3(0.005),
             glm::vec3(0.2),
             glm::vec3(0.5),
@@ -128,8 +232,15 @@ namespace hw4 {
     extern "C" int main(int argc, char** argv) {
         Scene scene;
 
-        populate_scene(scene);
-        scene.regen_bvh();
+        std::cout << "Loading scene...";
+        wait_with_spinner(std::async([&]() {
+            populate_scene(scene);
+        }));
+
+        std::cout << "Building scene BVH...";
+        wait_with_spinner(std::async([&]() {
+            scene.regen_bvh();
+        }));
 
         show_scene(scene);
         render_scene(scene);
