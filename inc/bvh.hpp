@@ -36,7 +36,59 @@ namespace hw4 {
             };
         }
 
-        bool intersects(const Ray& r) const;
+        bool intersects(const Ray& r) const {
+            // Calculate the range for t in the x direction. Note that if r has no x component, the
+            // range will properly come out to be -Infinity to Infinity.
+            float tmin = (this->m_min.x - r.origin().x) * r.inv_direction().x;
+            float tmax = (this->m_max.x - r.origin().x) * r.inv_direction().x;
+
+            if (tmin > tmax) {
+                std::swap(tmin, tmax);
+            }
+
+            {
+                // Calculate the range for t in the y direction.
+                float tymin = (this->m_min.y - r.origin().y) * r.inv_direction().y;
+                float tymax = (this->m_max.y - r.origin().y) * r.inv_direction().y;
+
+                if (tymin > tymax) {
+                    std::swap(tymin, tymax);
+                }
+
+                // If the calculated range was outside of the existing range, then the ray does not
+                // intersect.
+                if (tymin > tmax || tymax < tmin) {
+                    return false;
+                }
+
+                // Update the known range for t.
+                tmin = std::max(tmin, tymin);
+                tmax = std::min(tmax, tymax);
+            }
+
+            {
+                // Calculate the range for t in the z direction.
+                float tzmin = (this->m_min.z - r.origin().z) * r.inv_direction().z;
+                float tzmax = (this->m_max.z - r.origin().z) * r.inv_direction().z;
+
+                if (tzmin > tzmax) {
+                    std::swap(tzmin, tzmax);
+                }
+
+                // If the calculated range was outside of the existing range, then the ray does not
+                // intersect.
+                if (tzmin > tmax || tzmax < tmin) {
+                    return false;
+                }
+
+                // We could update tmin and tmax here, but we don't do any more checks, so that would be
+                // redundant.
+            }
+
+            // Now that we know the range for t, we can assume that the ray will intersect if the range
+            // for t includes some non-negative number.
+            return tmax > 0;
+        }
 
         static BoundingBox combine(BoundingBox a, BoundingBox b) {
             return BoundingBox(
@@ -67,6 +119,16 @@ namespace hw4 {
             std::unique_ptr<Node> right;
 
             std::vector<T*> objects;
+
+            template <typename TFn>
+            void search(const Ray& r, const TFn& fn) const {
+                if (this->box.intersects(r)) {
+                    fn(*this);
+
+                    if (this->left) this->left->search(r, fn);
+                    if (this->right) this->right->search(r, fn);
+                }
+            }
         };
     private:
         std::unique_ptr<Node> m_root;
@@ -76,28 +138,17 @@ namespace hw4 {
 
         const std::unique_ptr<Node>& root() const { return this->m_root; }
 
-        void search(const Ray& r, std::function<void (Node&)> fn) const {
-            if (!this->m_root) return;
-
-            std::deque<Node*> nodes { this->m_root.get() };
-
-            while (!nodes.empty()) {
-                auto node = nodes.front();
-
-                if (node->box.intersects(r)) {
-                    if (node->left) nodes.push_back(node->left.get());
-                    if (node->right) nodes.push_back(node->right.get());
-
-                    fn(*node);
-                }
-
-                nodes.pop_front();
+        template <typename TFn>
+        void search(const Ray& r, const TFn& fn) const {
+            if (this->m_root) {
+                this->m_root->search(r, fn);
             }
         }
 
+        template <typename TAABBFn>
         static BVH<T> construct(
             const std::vector<T*>& objects,
-            std::function<BoundingBox (const T&)> aabb
+            TAABBFn aabb
         ) {
             if (objects.empty()) return BVH<T>();
 
