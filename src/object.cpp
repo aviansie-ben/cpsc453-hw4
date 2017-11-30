@@ -76,6 +76,8 @@ namespace hw4 {
 
         float t = glm::dot(ac, qvec) * inv_det;
 
+        if (t < 0) return boost::none;
+
         // Now that we know an intersection occurs, we need to use u and v to perform barycentric
         // interpolation to find the correct attribute values
         return Intersection(
