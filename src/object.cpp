@@ -58,9 +58,9 @@ namespace hw4 {
         auto pvec = glm::cross(r.direction(), ac);
         float det = glm::dot(ab, pvec);
 
-        // If det is positive (or close to being positive), then the triangle is backfacing. So we
+        // If det is negative (or close to being negative), then the triangle is backfacing. So we
         // bail early in that case.
-        if (det >= -0.00001f) return boost::none;
+        if (det <= 0.00001f) return boost::none;
 
         float inv_det = 1.0 / det;
 
@@ -80,7 +80,7 @@ namespace hw4 {
         // interpolation to find the correct attribute values
         return Intersection(
             r.origin() + t * r.direction(),
-            (1 - u - v) * a.normal + u * b.normal + v * c.normal,
+            glm::normalize((1 - u - v) * a.normal + u * b.normal + v * c.normal),
             (1 - u - v) * a.texcoord + u * b.texcoord + v * c.texcoord,
             nullptr,
             t

@@ -196,8 +196,8 @@ namespace hw4 {
                     Vertex { glm::vec3(2, -2, 0), glm::vec3(0, 0, -1), glm::vec2(0, 0) }
                 },
                 std::vector<Triangle> {
-                    Triangle { 0, 1, 2 },
-                    Triangle { 0, 2, 3 }
+                    Triangle { 0, 2, 1 },
+                    Triangle { 0, 3, 2 }
                 }
             ),
             glm::rotate(glm::translate(glm::mat4(), glm::vec3(-1, 0, 4)), glm::radians(-30.0f), glm::vec3(0, 1, 0)),
@@ -212,8 +212,8 @@ namespace hw4 {
                     Vertex { glm::vec3(2, -2, 0), glm::vec3(0, 0, -1), glm::vec2(0, 0) }
                 },
                 std::vector<Triangle> {
-                    Triangle { 0, 1, 2 },
-                    Triangle { 0, 2, 3 }
+                    Triangle { 0, 2, 1 },
+                    Triangle { 0, 3, 2 }
                 }
             ),
             glm::rotate(glm::translate(glm::mat4(), glm::vec3(1, 0, 4)), glm::radians(30.0f), glm::vec3(0, 1, 0)),
