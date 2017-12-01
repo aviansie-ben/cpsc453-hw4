@@ -29,8 +29,11 @@ namespace hw4 {
 
         float t = -(b + std::sqrt(qterm)) / 2;
 
-        if (t <= 0)
-            return boost::none;
+        if (t <= 0) {
+            t = -(b - std::sqrt(qterm)) / 2;
+
+            if (t <= 0) return boost::none;
+        }
 
         auto p = r.origin() + t * r.direction();
 
@@ -58,9 +61,8 @@ namespace hw4 {
         auto pvec = glm::cross(r.direction(), ac);
         float det = glm::dot(ab, pvec);
 
-        // If det is negative (or close to being negative), then the triangle is backfacing. So we
-        // bail early in that case.
-        if (det <= 0.00001f) return boost::none;
+        // If det is close to zero, then the ray is parallel to the triangle, so we can bail early.
+        if (std::fabs(det) <= 1e-7f) return boost::none;
 
         float inv_det = 1.0 / det;
 
