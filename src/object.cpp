@@ -287,7 +287,7 @@ namespace hw4 {
         this->m_tex.clear();
         this->m_norm.clear();
 
-        return std::move(mesh);
+        return mesh;
     }
 
     std::shared_ptr<TriMesh> TriMesh::load_mesh(boost::filesystem::path path) {

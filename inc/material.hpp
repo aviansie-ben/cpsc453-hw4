@@ -38,7 +38,7 @@ namespace hw4 {
 
             m.m_reflectance = reflectance;
 
-            return std::move(m);
+            return m;
         }
 
         static Material diffuse(
@@ -54,7 +54,7 @@ namespace hw4 {
             m.m_specular = specular;
             m.m_shininess = shininess;
 
-            return std::move(m);
+            return m;
         }
     };
 }

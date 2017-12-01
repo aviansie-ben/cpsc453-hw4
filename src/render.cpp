@@ -164,7 +164,7 @@ namespace hw4 {
             t.join();
         }
 
-        return std::move(img);
+        return img;
     }
 
     Image RayTraceRenderer::render_patch(
@@ -194,7 +194,7 @@ namespace hw4 {
             }
         }
 
-        return std::move(img);
+        return img;
     }
 
     glm::vec3 RayTraceRenderer::render_pixel(

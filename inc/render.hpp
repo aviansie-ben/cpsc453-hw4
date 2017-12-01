@@ -1,5 +1,5 @@
 #ifndef HW4_RENDER_HPP
-#define Hw4_RENDER_HPP
+#define HW4_RENDER_HPP
 
 #include <algorithm>
 #include <functional>

@@ -177,7 +177,7 @@ namespace hw4 {
                         ts.push_back(&t);
                     }
 
-                    return std::move(ts);
+                    return ts;
                 })(),
                 delta,
                 [this](const auto& t) { return this->calc_triangle_bounding_box(t); }
