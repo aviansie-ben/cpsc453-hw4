@@ -100,14 +100,12 @@ namespace hw4 {
         float depth = std::numeric_limits<float>::infinity();
         boost::optional<Intersection> intersection;
 
-        this->m_bvh.search(r, [&](auto& n) {
-            for (Triangle* t : n.objects) {
-                auto new_intersection = this->find_intersection(r, *t);
+        this->m_bvh.search(r, [&](auto& t) {
+            auto new_intersection = this->find_intersection(r, t);
 
-                if (new_intersection && new_intersection->distance() < depth) {
-                    depth = new_intersection->distance();
-                    intersection = new_intersection;
-                }
+            if (new_intersection && new_intersection->distance() < depth) {
+                depth = new_intersection->distance();
+                intersection = new_intersection;
             }
         });
 

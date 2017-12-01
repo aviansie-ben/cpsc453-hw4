@@ -24,7 +24,26 @@ namespace hw4 {
         auto& point_lights() { return this->m_point_lights; }
 
         const BVH<Object>& bvh() const { return this->m_bvh; }
-        Scene& regen_bvh() {
+        Scene& regen_mesh_bvhs(size_t delta) {
+            std::vector<TriMesh*> meshes;
+
+            for (const auto& obj : this->m_objects) {
+                auto mesh_obj = dynamic_cast<TriMeshObject*>(obj.get());
+
+                if (mesh_obj) {
+                    if (std::find(meshes.begin(), meshes.end(), mesh_obj->mesh().get()) == meshes.end()) {
+                        meshes.push_back(mesh_obj->mesh().get());
+                    }
+                }
+            }
+
+            for (auto mesh : meshes) {
+                mesh->regen_bvh(delta);
+            }
+
+            return *this;
+        }
+        Scene& regen_bvh(size_t delta) {
             std::vector<Object*> objects;
 
             for (const auto& o : this->m_objects) {
@@ -33,6 +52,7 @@ namespace hw4 {
 
             this->m_bvh = BVH<Object>::construct(
                 objects,
+                delta,
                 [](const auto& o) { return o.aabb(); }
             );
 

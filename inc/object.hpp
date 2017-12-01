@@ -119,10 +119,31 @@ namespace hw4 {
         unsigned int c;
     };
 
+    inline BoundingBox calc_bounding_box(const std::vector<Vertex>& vertices) {
+        if (vertices.empty()) return BoundingBox();
+
+        glm::vec3 min(vertices[0].pos);
+        glm::vec3 max(vertices[0].pos);
+
+        for (const auto& v : vertices) {
+            if (v.pos.x < min.x) min.x = v.pos.x;
+            if (v.pos.x > max.x) max.x = v.pos.x;
+
+            if (v.pos.y < min.y) min.y = v.pos.y;
+            if (v.pos.y > max.y) max.y = v.pos.y;
+
+            if (v.pos.z < min.z) min.z = v.pos.z;
+            if (v.pos.z > max.z) max.z = v.pos.z;
+        }
+
+        return BoundingBox(min, max);
+    }
+
     class TriMesh {
         std::vector<Vertex> m_vertices;
         std::vector<Triangle> m_triangles;
         BVH<Triangle> m_bvh;
+        BoundingBox m_obb;
 
         BoundingBox calc_triangle_bounding_box(const Triangle& t) {
             const auto& a = this->m_vertices[t.a].pos;
@@ -145,20 +166,27 @@ namespace hw4 {
     public:
         TriMesh(std::vector<Vertex> vertices, std::vector<Triangle> triangles)
             : m_vertices(std::move(vertices)), m_triangles(std::move(triangles)),
-              m_bvh(BVH<Triangle>::construct(
-                  ([this]() {
-                      std::vector<Triangle*> ts;
+              m_obb(calc_bounding_box(this->m_vertices)) {}
 
-                      for (auto& t : this->m_triangles) {
-                          ts.push_back(&t);
-                      }
+        TriMesh& regen_bvh(size_t delta) {
+            this->m_bvh = BVH<Triangle>::construct(
+                ([this]() {
+                    std::vector<Triangle*> ts;
 
-                      return std::move(ts);
-                  })(),
-                  [this](const auto& t) { return this->calc_triangle_bounding_box(t); }
-              )) {}
+                    for (auto& t : this->m_triangles) {
+                        ts.push_back(&t);
+                    }
 
-        const BoundingBox& obb() const { return this->m_bvh.root()->box; }
+                    return std::move(ts);
+                })(),
+                delta,
+                [this](const auto& t) { return this->calc_triangle_bounding_box(t); }
+            );
+
+            return *this;
+        }
+
+        const BoundingBox& obb() const { return this->m_obb; }
 
         const std::vector<Vertex>& vertices() const { return this->m_vertices; }
         const std::vector<Triangle>& triangles() const { return this->m_triangles; }

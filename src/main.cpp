@@ -240,9 +240,14 @@ namespace hw4 {
             populate_scene(scene);
         }));
 
+        std::cout << "Building mesh BVHs...";
+        wait_with_spinner(std::async([&]() {
+            scene.regen_mesh_bvhs(100);
+        }));
+
         std::cout << "Building scene BVH...";
         wait_with_spinner(std::async([&]() {
-            scene.regen_bvh();
+            scene.regen_bvh(100);
         }));
 
         show_scene(scene);

@@ -232,22 +232,18 @@ namespace hw4 {
         float depth = std::numeric_limits<float>::infinity();
         Intersection i;
 
-        scene.bvh().search(ray, [&](auto& n) {
-            for (Object* o : n.objects) {
-                if (o->aabb().intersects(ray)) {
-                    float dist_mult;
-                    Ray obj_ray = ray.transform(o->inv_transform(), dist_mult);
-                    boost::optional<Intersection> intersection = o->find_intersection(obj_ray);
+        scene.bvh().search(ray, [&](auto& o) {
+            float dist_mult;
+            Ray obj_ray = ray.transform(o.inv_transform(), dist_mult);
+            boost::optional<Intersection> intersection = o.find_intersection(obj_ray);
 
-                    if (!intersection) continue;
+            if (!intersection) return;
 
-                    float new_depth = intersection->distance() * dist_mult;
+            float new_depth = intersection->distance() * dist_mult;
 
-                    if (new_depth < depth) {
-                        depth = intersection->distance() * dist_mult;
-                        i = intersection->transform(o->transform(), dist_mult);
-                    }
-                }
+            if (new_depth < depth) {
+                depth = intersection->distance() * dist_mult;
+                i = intersection->transform(o.transform(), dist_mult);
             }
         });
 
@@ -307,19 +303,15 @@ namespace hw4 {
         bool occluded = false;
 
         // TODO Optimize this
-        scene.bvh().search(ray, [&](auto& n) {
-            for (Object* o : n.objects) {
-                if (o->aabb().intersects(ray)) {
-                    float dist_mult;
-                    Ray obj_ray = ray.transform(o->inv_transform(), dist_mult);
-                    boost::optional<Intersection> intersection = o->find_intersection(obj_ray);
+        scene.bvh().search(ray, [&](auto& o) {
+            float dist_mult;
+            Ray obj_ray = ray.transform(o.inv_transform(), dist_mult);
+            boost::optional<Intersection> intersection = o.find_intersection(obj_ray);
 
-                    if (!intersection) continue;
+            if (!intersection) return;
 
-                    if (intersection->distance() * dist_mult <= dist) {
-                        occluded = true;
-                    }
-                }
+            if (intersection->distance() * dist_mult <= dist) {
+                occluded = true;
             }
         });
 
