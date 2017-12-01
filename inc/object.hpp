@@ -4,6 +4,7 @@
 #include <array>
 #include <memory>
 
+#include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
 #include <glm/glm.hpp>
 
@@ -165,6 +166,8 @@ namespace hw4 {
 
         boost::optional<Intersection> find_intersection(const Ray& r, const Triangle& t) const;
         boost::optional<Intersection> find_intersection(const Ray& r) const;
+
+        static std::shared_ptr<TriMesh> load_mesh(boost::filesystem::path path);
     };
 
     class TriMeshObject : public Object {
@@ -175,6 +178,8 @@ namespace hw4 {
             const glm::mat4& transform,
             const std::shared_ptr<Material>& material
         ) : Object(mesh->obb(), transform, material), m_mesh(std::move(mesh)) {}
+
+        const std::shared_ptr<TriMesh>& mesh() const { return this->m_mesh; }
 
         virtual boost::optional<Intersection> find_intersection(const Ray& r) const;
     };

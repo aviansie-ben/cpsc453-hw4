@@ -1,7 +1,12 @@
 #include <cmath>
 #include <iostream>
 #include <limits>
+#include <map>
+#include <sstream>
+#include <stdexcept>
 
+#include <boost/algorithm/string.hpp>
+#include <boost/filesystem/fstream.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "object.hpp"
@@ -107,6 +112,217 @@ namespace hw4 {
         });
 
         return intersection;
+    }
+
+    class TriMeshLoader {
+        std::vector<Vertex> m_vertices;
+        std::vector<Triangle> m_triangles;
+
+        std::map<std::tuple<unsigned int, unsigned int, unsigned int>, unsigned int> m_vertex_indices;
+
+        std::vector<glm::vec3> m_pos;
+        std::vector<glm::vec2> m_tex;
+        std::vector<glm::vec3> m_norm;
+
+        unsigned int add_vertex(unsigned int pos, unsigned int tex, unsigned int norm);
+        unsigned int add_vertex(std::string spec);
+    public:
+        TriMeshLoader() {}
+        TriMeshLoader(const TriMeshLoader& other) = delete;
+
+        TriMeshLoader& operator =(const TriMeshLoader& other) = delete;
+
+        void handle_line(std::string line);
+        std::shared_ptr<TriMesh> finish();
+    };
+
+    unsigned int TriMeshLoader::add_vertex(unsigned int pos, unsigned int tex, unsigned int norm) {
+        auto t = std::make_tuple(pos, tex, norm);
+        auto existing_entry = this->m_vertex_indices.find(t);
+
+        if (existing_entry != this->m_vertex_indices.end()) {
+            return existing_entry->second;
+        }
+
+        if (pos >= this->m_pos.size() || tex >= this->m_tex.size() || norm >= this->m_norm.size()) {
+            throw std::runtime_error("Face vertex index out of range");
+        }
+
+        this->m_vertices.push_back(Vertex {
+            .pos = this->m_pos[pos],
+            .normal = this->m_norm[norm],
+            .texcoord = this->m_tex[tex]
+        });
+        this->m_vertex_indices.emplace(t, this->m_vertices.size() - 1);
+
+        return this->m_vertices.size() - 1;
+    }
+
+    unsigned int TriMeshLoader::add_vertex(std::string spec) {
+        std::vector<std::string> parts;
+
+        boost::split(parts, spec, boost::is_any_of("/"));
+
+        if (parts.size() != 3) {
+            throw std::runtime_error(([&]() {
+                std::ostringstream ss;
+
+                ss << "Invalid face vertex specification \"" << spec << "\"";
+
+                return ss.str();
+            })());
+        }
+
+        int pos = std::stoi(parts[0]);
+        if (pos < 0) {
+            pos += this->m_pos.size() + 1;
+
+            if (pos <= 0) {
+                throw std::out_of_range("Negative index out of range");
+            }
+        } else if (pos == 0) {
+            throw std::out_of_range("0 is not a valid index");
+        }
+
+        int tex = std::stoi(parts[1]);
+        if (tex < 0) {
+            tex += this->m_tex.size() + 1;
+
+            if (tex <= 0) {
+                throw std::out_of_range("Negative index out of range");
+            }
+        } else if (tex == 0) {
+            throw std::out_of_range("0 is not a valid index");
+        }
+
+        int norm = std::stoi(parts[2]);
+        if (norm < 0) {
+            norm += this->m_norm.size() + 1;
+
+            if (norm <= 0) {
+                throw std::out_of_range("Negative index out of range");
+            }
+        } else if (norm == 0) {
+            throw std::out_of_range("0 is not a valid index");
+        }
+
+        return this->add_vertex(
+            static_cast<unsigned int>(pos - 1),
+            static_cast<unsigned int>(tex - 1),
+            static_cast<unsigned int>(norm - 1)
+        );
+    }
+
+    static glm::vec3 parse_vec3(const std::vector<std::string>& parts, int start) {
+        return glm::vec3(
+            std::stof(parts[start]),
+            std::stof(parts[start + 1]),
+            std::stof(parts[start + 2])
+        );
+    }
+
+    static glm::vec2 parse_vec2(const std::vector<std::string>& parts, int start) {
+        return glm::vec2(
+            std::stof(parts[start]),
+            std::stof(parts[start + 1])
+        );
+    }
+
+    void TriMeshLoader::handle_line(std::string line) {
+        size_t comment_pos = line.find("#");
+
+        if (comment_pos != std::string::npos) {
+            line = line.substr(0, comment_pos);
+        }
+
+        boost::trim(line);
+
+        if (line.size() == 0) {
+            return;
+        }
+
+        std::vector<std::string> parts;
+
+        boost::split(parts, line, boost::is_any_of(" \t"), boost::token_compress_on);
+
+        if (parts[0] == "v") {
+            if (parts.size() != 4) {
+                throw std::runtime_error("Wrong number of arguments for \"v\"");
+            }
+
+            this->m_pos.push_back(parse_vec3(parts, 1));
+        } else if (parts[0] == "vt") {
+            if (parts.size() != 3) {
+                throw std::runtime_error("Wrong number of arguments for \"vt\"");
+            }
+
+            auto v = parse_vec2(parts, 1);
+
+            this->m_tex.push_back(glm::vec2(v.x, 1 - v.y));
+        } else if (parts[0] == "vn") {
+            if (parts.size() != 4) {
+                throw std::runtime_error("Wrong number of arguments for \"vn\"");
+            }
+
+            this->m_norm.push_back(parse_vec3(parts, 1));
+        } else if (parts[0] == "f") {
+            if (parts.size() != 4) {
+                throw std::runtime_error("Wrong number of arguments for \"f\"");
+            }
+
+            this->m_triangles.push_back(Triangle {
+                .a = this->add_vertex(parts[1]),
+                .b = this->add_vertex(parts[2]),
+                .c = this->add_vertex(parts[3])
+            });
+        }
+    }
+
+    std::shared_ptr<TriMesh> TriMeshLoader::finish() {
+        auto mesh = std::make_shared<TriMesh>(
+            std::move(this->m_vertices),
+            std::move(this->m_triangles)
+        );
+
+        this->m_vertex_indices.clear();
+        this->m_pos.clear();
+        this->m_tex.clear();
+        this->m_norm.clear();
+
+        return std::move(mesh);
+    }
+
+    std::shared_ptr<TriMesh> TriMesh::load_mesh(boost::filesystem::path path) {
+        boost::filesystem::ifstream f(path);
+
+        if (!f) {
+            throw std::runtime_error(([&]() {
+                std::ostringstream ss;
+
+                ss << "Failed to open object file \"" << path.string() << "\"";
+
+                return ss.str();
+            })());
+        }
+
+        TriMeshLoader loader;
+        std::string line;
+
+        while (std::getline(f, line)) {
+            loader.handle_line(line);
+        }
+
+        if (f.bad()) {
+            throw std::runtime_error(([&]() {
+                std::ostringstream ss;
+
+                ss << "Error reading object file \"" << path.string() << "\"";
+
+                return ss.str();
+            })());
+        }
+
+        return loader.finish();
     }
 
     boost::optional<Intersection> TriMeshObject::find_intersection(const Ray& r) const {

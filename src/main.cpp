@@ -180,14 +180,17 @@ namespace hw4 {
             ),
             0.9
         ));
+        auto mdl_knight = TriMesh::load_mesh("knight.obj");
 
+        scene.objects().push_back(std::make_unique<TriMeshObject>(
+                mdl_knight,
+                glm::translate(glm::mat4(), glm::vec3(0, -1, -2)),
+                mat
+        ));
         scene.objects().push_back(
-            std::unique_ptr<Object>(new SphereObject(0.5, glm::vec3(0, 0, -2), mat))
+            std::make_unique<SphereObject>(0.5, glm::vec3(0, 0, 2), mat2)
         );
-        scene.objects().push_back(
-            std::unique_ptr<Object>(new SphereObject(0.5, glm::vec3(0, 0, 2), mat2))
-        );
-        scene.objects().push_back(std::unique_ptr<Object>(new TriMeshObject(
+        scene.objects().push_back(std::make_unique<TriMeshObject>(
             std::make_shared<TriMesh>(
                 std::vector<Vertex> {
                     Vertex { glm::vec3(2, 2, 0), glm::vec3(0, 0, -1), glm::vec2(0, 0) },
@@ -202,8 +205,8 @@ namespace hw4 {
             ),
             glm::rotate(glm::translate(glm::mat4(), glm::vec3(-1, 0, 4)), glm::radians(-30.0f), glm::vec3(0, 1, 0)),
             mat
-        )));
-        scene.objects().push_back(std::unique_ptr<Object>(new TriMeshObject(
+        ));
+        scene.objects().push_back(std::make_unique<TriMeshObject>(
             std::make_shared<TriMesh>(
                 std::vector<Vertex> {
                     Vertex { glm::vec3(2, 2, 0), glm::vec3(0, 0, -1), glm::vec2(0, 0) },
@@ -218,7 +221,7 @@ namespace hw4 {
             ),
             glm::rotate(glm::translate(glm::mat4(), glm::vec3(1, 0, 4)), glm::radians(30.0f), glm::vec3(0, 1, 0)),
             mat3
-        )));
+        ));
 
         scene.point_lights().push_back(std::make_unique<PointLight>(
             glm::vec3(0, 1, 1),
