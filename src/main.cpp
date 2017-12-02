@@ -1,16 +1,29 @@
 #include <atomic>
 #include <chrono>
+#include <cstdlib>
 #include <future>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 
+#include <boost/algorithm/string.hpp>
+#include <boost/program_options.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "render.hpp"
 #include "scene.hpp"
 
 namespace hw4 {
+    struct ProgramOptions {
+        bool no_preview;
+        int supersample_level;
+        int max_recursion;
+        glm::ivec2 size;
+
+        boost::filesystem::path scene;
+        boost::filesystem::path output;
+    };
+
     void print_image(const Image& img, std::ostream& s) {
         for (int y = 0; y < img.size().y; y += 2) {
             for (int x = 0; x < img.size().x; x++) {
@@ -35,7 +48,7 @@ namespace hw4 {
         s << std::flush;
     }
 
-    void wait_with_spinner(const std::future<void>& f) {
+    void wait_with_spinner(std::future<void> f) {
         int state = 0;
 
         std::cout << " ";
@@ -62,11 +75,18 @@ namespace hw4 {
             if (state == 4) state = 0;
         } while (f.wait_for(std::chrono::milliseconds(250)) == std::future_status::timeout);
 
+        try {
+            f.get();
+        } catch (std::exception& e) {
+            std::cout << "\033[KFAIL\n" << e.what() << std::endl;
+            std::exit(1);
+        }
+
         std::cout << "DONE" << std::endl;
     }
 
     void wait_with_spinner_and_progress(
-        const std::future<void>& f,
+        std::future<void> f,
         const std::function<float ()>& progress_fn
     ) {
         int state = 0;
@@ -102,6 +122,13 @@ namespace hw4 {
             if (state == 4) state = 0;
         } while (f.wait_for(std::chrono::milliseconds(250)) == std::future_status::timeout);
 
+        try {
+            f.get();
+        } catch (std::exception& e) {
+            std::cout << "\033[KFAIL\n" << e.what() << std::endl;
+            std::exit(1);
+        }
+
         std::cout << "\033[KDONE" << std::endl;
     }
 
@@ -125,119 +152,189 @@ namespace hw4 {
         );
     }
 
-    void show_scene(const Scene& scene) {
-        RayTraceRenderer render(glm::ivec2(160, 120), glm::radians(90.0f), 5, 2);
+    void show_scene(const Scene& scene, const glm::mat4& transform, const ProgramOptions& options) {
+        RayTraceRenderer render(
+            glm::ivec2(160, 120),
+            glm::radians(90.0f),
+            options.max_recursion,
+            2
+        );
         Image img;
 
         std::cout << "Generating preview...";
         render_with_progress(
             render,
             scene,
-            glm::mat4(),
+            transform,
             img
         );
 
         print_image(img, std::cout);
     }
 
-    void render_scene(const Scene& scene) {
-        RayTraceRenderer render(glm::ivec2(640, 480), glm::radians(90.0f), 5, 4);
+    void render_scene(const Scene& scene, const glm::mat4& transform, const ProgramOptions& options) {
+        RayTraceRenderer render(
+            options.size,
+            glm::radians(90.0f),
+            options.max_recursion,
+            options.supersample_level
+        );
         Image img;
 
         std::cout << "Generating full-size image...";
         render_with_progress(
             render,
             scene,
-            glm::mat4(),
+            transform,
             img
         );
 
-        img.save_as_ppm("test.ppm");
+        img.save_as_ppm(options.output);
     }
 
-    void populate_scene(Scene& scene) {
-        auto mat = std::make_shared<Material>(Material::diffuse(
-            glm::vec3(0.7, 0.3, 0.3),
-            glm::vec3(0.7, 0.3, 0.3),
-            glm::vec3(0.5),
-            10
-        ));
-        auto mat2 = std::make_shared<Material>(Material::reflective(
-            Material::diffuse(
-                glm::vec3(0, 0, 0.1),
-                glm::vec3(0, 0, 0.1),
-                glm::vec3(1),
-                500
-            ),
-            0.3
-        ));
-        auto mat3 = std::make_shared<Material>(Material::reflective(
-            Material::diffuse(
-                glm::vec3(0, 0.01, 0),
-                glm::vec3(0, 0.01, 0),
-                glm::vec3(1),
-                500
-            ),
-            0.9
-        ));
-        auto mdl_knight = TriMesh::load_mesh("knight.obj");
+    struct option_ivec2 {
+        glm::ivec2 v;
 
-        scene.objects().push_back(std::make_unique<TriMeshObject>(
-                mdl_knight,
-                glm::translate(glm::mat4(), glm::vec3(0, -1, -2)),
-                mat
-        ));
-        scene.objects().push_back(
-            std::make_unique<SphereObject>(0.5, glm::vec3(0, 0, 2), mat2)
-        );
-        scene.objects().push_back(std::make_unique<TriMeshObject>(
-            std::make_shared<TriMesh>(
-                std::vector<Vertex> {
-                    Vertex { glm::vec3(2, 2, 0), glm::vec3(0, 0, -1), glm::vec2(0, 0) },
-                    Vertex { glm::vec3(-2, 2, 0), glm::vec3(0, 0, -1), glm::vec2(0, 0) },
-                    Vertex { glm::vec3(-2, -2, 0), glm::vec3(0, 0, -1), glm::vec2(0, 0) },
-                    Vertex { glm::vec3(2, -2, 0), glm::vec3(0, 0, -1), glm::vec2(0, 0) }
-                },
-                std::vector<Triangle> {
-                    Triangle { 0, 2, 1 },
-                    Triangle { 0, 3, 2 }
-                }
-            ),
-            glm::rotate(glm::translate(glm::mat4(), glm::vec3(-1, 0, 4)), glm::radians(-30.0f), glm::vec3(0, 1, 0)),
-            mat
-        ));
-        scene.objects().push_back(std::make_unique<TriMeshObject>(
-            std::make_shared<TriMesh>(
-                std::vector<Vertex> {
-                    Vertex { glm::vec3(2, 2, 0), glm::vec3(0, 0, -1), glm::vec2(0, 0) },
-                    Vertex { glm::vec3(-2, 2, 0), glm::vec3(0, 0, -1), glm::vec2(0, 0) },
-                    Vertex { glm::vec3(-2, -2, 0), glm::vec3(0, 0, -1), glm::vec2(0, 0) },
-                    Vertex { glm::vec3(2, -2, 0), glm::vec3(0, 0, -1), glm::vec2(0, 0) }
-                },
-                std::vector<Triangle> {
-                    Triangle { 0, 2, 1 },
-                    Triangle { 0, 3, 2 }
-                }
-            ),
-            glm::rotate(glm::translate(glm::mat4(), glm::vec3(1, 0, 4)), glm::radians(30.0f), glm::vec3(0, 1, 0)),
-            mat3
-        ));
+        option_ivec2() {}
+        option_ivec2(glm::ivec2 v) : v(v) {}
 
-        scene.point_lights().push_back(std::make_unique<PointLight>(
-            glm::vec3(0, 1, 1),
-            glm::vec3(0.005),
-            glm::vec3(0.2),
-            glm::vec3(0.5),
-            glm::vec3(1, 0, 0.3)
-        ));
+        operator glm::ivec2() const { return this->v; }
+    };
+
+    std::ostream& operator <<(std::ostream& s, const option_ivec2& v) {
+        return s << v.v.x << "," << v.v.y;
+    }
+
+    void validate(boost::any& v, const std::vector<std::string>& values, option_ivec2*, int) {
+        namespace po = boost::program_options;
+
+        po::validators::check_first_occurrence(v);
+        const std::string& s = po::validators::get_single_string(values);
+        std::vector<std::string> parts;
+
+        boost::split(parts, s, boost::is_any_of(","));
+
+        if (parts.size() != 2) {
+            throw po::validation_error(po::validation_error::invalid_option_value);
+        }
+
+        try {
+            v = option_ivec2(glm::ivec2(
+                boost::lexical_cast<int>(parts[0]),
+                boost::lexical_cast<int>(parts[1])
+            ));
+        } catch (std::exception& e) {
+            throw po::validation_error(po::validation_error::invalid_option_value);
+        }
+    }
+
+    boost::optional<ProgramOptions> parse_options(int argc, char** argv) {
+        namespace po = boost::program_options;
+
+        po::positional_options_description pos_options;
+        pos_options.add("scene", 1);
+
+        po::options_description hidden_options;
+        hidden_options.add_options()
+            ("scene", po::value<std::string>());
+
+        po::options_description render_options("Render Options");
+        render_options.add_options()
+            ("no-preview", "Skip generating a preview image")
+            (
+                "supersample",
+                po::value<int>()
+                    ->value_name("<n>")
+                    ->default_value(2),
+                "Use n^2 rays per pixel for supersampling"
+            )
+            (
+                "max-recursion",
+                po::value<int>()
+                    ->value_name("<n>")
+                    ->default_value(5),
+                "Allow a maximum of n recursive rays to be traced (0 renders only view rays)"
+            )
+            (
+                "size,s",
+                po::value<option_ivec2>()
+                    ->value_name("<w>,<h>")
+                    ->default_value(glm::ivec2(640, 480)),
+                "The size (in pixels) of the image to generate"
+            );
+
+        po::options_description general_options("General Options");
+        general_options.add_options()
+            (
+                ",o",
+                po::value<std::string>()
+                    ->value_name("<filename>")
+                    ->default_value("output.ppm"),
+                "The name of the PPM file to save the rendered image as"
+            )
+            ("help,h", "Display this help message");
+
+        po::options_description all_options;
+        all_options.add(hidden_options);
+        all_options.add(render_options);
+        all_options.add(general_options);
+
+        po::variables_map vm;
+
+        try {
+            po::store(
+                po::command_line_parser(argc, argv)
+                    .options(all_options)
+                    .positional(pos_options)
+                    .run(),
+                vm
+            );
+            po::notify(vm);
+        } catch (po::error& e) {
+            std::cerr << argv[0] << ": " << e.what() << "\nUse " << argv[0] << " -h for help\n";
+            return boost::none;
+        }
+
+        if (vm.count("help")) {
+            std::cerr << "Usage: " << argv[0] << " [options...] <scene>\n"
+                      << "Simple Whitted Ray Tracer v0.1\n"
+                      << render_options
+                      << general_options;
+            return boost::none;
+        }
+
+        if (!vm.count("scene")) {
+            std::cerr << argv[0] << ": No scene file specified\nUse " << argv[0]
+                      << " -h for help\n";
+            return boost::none;
+        }
+
+        ProgramOptions result;
+
+        result.no_preview = vm.count("no-preview") > 0;
+        result.supersample_level = vm["supersample"].as<int>();
+        result.max_recursion = vm["max-recursion"].as<int>();
+        result.size = vm["size"].as<option_ivec2>();
+
+        result.scene = vm["scene"].as<std::string>();
+        result.output = vm["-o"].as<std::string>();
+
+        return result;
     }
 
     extern "C" int main(int argc, char** argv) {
+        auto options = parse_options(argc, argv);
+
+        if (!options) {
+            return 2;
+        }
+
         Scene scene;
+        auto transform = glm::translate(glm::mat4(), glm::vec3(0, -1, 3));
 
         std::cout << "Loading scene...";
         wait_with_spinner(std::async([&]() {
-            populate_scene(scene);
+            scene = Scene::load_scene(options->scene);
         }));
 
         std::cout << "Building mesh BVHs...";
@@ -250,8 +347,8 @@ namespace hw4 {
             scene.regen_bvh(100);
         }));
 
-        show_scene(scene);
-        render_scene(scene);
+        if (!options->no_preview) show_scene(scene, transform, *options);
+        render_scene(scene, transform, *options);
 
         return 0;
     }

@@ -7,6 +7,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include "bvh.hpp"
 #include "material.hpp"
@@ -211,6 +212,18 @@ namespace hw4 {
 
         virtual boost::optional<Intersection> find_intersection(const Ray& r) const;
     };
+
+    inline glm::mat4 apply_orientation(const glm::mat4& transform, const glm::vec3& rot) {
+        return glm::rotate(
+            glm::rotate(
+                glm::rotate(transform, rot.x, glm::vec3(0, 1, 0)),
+                rot.y,
+                glm::vec3(1, 0, 0)
+            ),
+            rot.z,
+            glm::vec3(0, 0, 1)
+        );
+    }
 }
 
 #endif

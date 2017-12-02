@@ -258,7 +258,7 @@ namespace hw4 {
             if (mat.reflectance > 0) {
                 result += mat.reflectance * this->render_ray(
                     scene,
-                    Ray(i.point(), glm::reflect(ray.direction(), i.normal())).adjust(0.001f),
+                    Ray(i.point(), glm::reflect(ray.direction(), -i.normal())).adjust(0.001f),
                     recursion + 1
                 );
             }

@@ -4,6 +4,8 @@
 #include <memory>
 #include <vector>
 
+#include <boost/filesystem.hpp>
+
 #include "bvh.hpp"
 #include "light.hpp"
 #include "object.hpp"
@@ -58,6 +60,8 @@ namespace hw4 {
 
             return *this;
         }
+
+        static Scene load_scene(boost::filesystem::path path);
     };
 }
 

@@ -1,0 +1,49 @@
+mdl knight models/chess_knight/knight.obj
+mtl knight
+  ambient 1 1 1
+  diffuse 1 1 1
+  specular 0.5 0.5 0.5
+  shininess 10
+
+  reflectance 0.25
+
+  # diffuse_map models/chess_knight/knight.colour.white.png
+  # ao_map models/chess_knight/knight.ao.png
+
+mtl mirror
+  ambient 0.1 0.1 0.1
+  diffuse 0.1 0.1 0.1
+  specular 1 1 1
+  shininess 100
+
+  reflectance 1
+
+plight
+  pos -1 1 -1
+
+  ambient 0.3 0.3 1
+  diffuse 0.3 0.3 1
+  specular 0.3 0.3 1
+
+  atten 1 0 1
+
+plight
+  pos 1 1 1
+
+  ambient 1 0.3 0.3
+  diffuse 1 0.3 0.3
+  specular 1 0.3 0.3
+
+  atten 1 0 1
+
+obj mesh
+  mdl knight
+  mtl knight
+
+  pos 0 0 0
+  rot 1 0 0
+
+obj sphere
+  mtl mirror
+  pos -2 1 1.5
+  scale 1
