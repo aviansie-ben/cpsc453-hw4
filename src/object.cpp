@@ -49,7 +49,7 @@ namespace hw4 {
                 0.5 + std::atan2(p.z, p.x) / tau,
                 0.5 + std::asin(p.y) * 2 / tau
             ),
-            this->material(),
+            this->material().get(),
             t
         );
     }
@@ -327,7 +327,7 @@ namespace hw4 {
         auto intersection = this->m_mesh->find_intersection(r);
 
         if (intersection) {
-            intersection->material(this->material());
+            intersection->material(this->material().get());
         }
 
         return intersection;

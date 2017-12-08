@@ -21,7 +21,7 @@ namespace hw4 {
         glm::vec3 m_normal;
         glm::vec2 m_texcoord;
 
-        std::shared_ptr<Material> m_material;
+        Material* m_material;
 
         float m_distance;
     public:
@@ -30,7 +30,7 @@ namespace hw4 {
             glm::vec3 point,
             glm::vec3 normal,
             glm::vec2 texcoord,
-            std::shared_ptr<Material> material,
+            Material* material,
             float distance
         )
             : m_point(point), m_normal(normal), m_texcoord(texcoord),
@@ -42,7 +42,7 @@ namespace hw4 {
         float distance() const { return this->m_distance; }
 
         PointMaterial material() const { return this->m_material->at_point(this->m_texcoord); }
-        Intersection& material(std::shared_ptr<Material> material) {
+        Intersection& material(Material* material) {
             this->m_material = material;
             return *this;
         }
