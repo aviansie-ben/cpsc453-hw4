@@ -5,8 +5,8 @@ mtl table
   specular 1 1 1
   shininess 5
 
-  # diffuse_map models/oak_table/oak_table.colour.jpg
-  # ao_map models/oak_table/oak_table.ao.png
+  diffuse_map models/oak_table/oak_table.colour.jpg
+  ao_map models/oak_table/oak_table.ao.png
 
 mdl chair models/oak_chair/oak_chair.obj
 mtl chair
@@ -15,20 +15,20 @@ mtl chair
   specular 1 1 1
   shininess 5
 
-  # diffuse_map models/oak_chair/oak_table.colour.jpg
-  # ao_map models/oak_chair/oak_chair.ao.png
+  diffuse_map models/oak_chair/oak_table.colour.jpg
+  ao_map models/oak_chair/oak_chair.ao.png
 
 mdl board models/chess_board/board.obj
 mtl board
   ambient 0.9 0.9 0.9
   diffuse 0.9 0.9 0.9
   specular 1 1 1
-  shininess 10
+  shininess 50
 
   reflectance 0.1
 
-  # diffuse_map models/chess_board/board.colour.png
-  # ao_map models/chess_board/board.ao.png
+  diffuse_map models/chess_board/board.colour.png
+  ao_map models/chess_board/board.ao.png
 
 mdl pawn models/chess_pawn/pawn.obj
 mdl rook models/chess_rook/rook.obj
@@ -47,7 +47,7 @@ mtl chess_white
 mtl chess_black
   ambient 0.1 0.1 0.1
   diffuse 0.1 0.1 0.1
-  specular 0.1 0.1 0.1
+  specular 1 1 1
   shininess 100
 
   reflectance 0.5

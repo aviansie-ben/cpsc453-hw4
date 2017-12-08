@@ -214,6 +214,9 @@ namespace hw4 {
         auto specular = glm::vec3(1);
         float shininess = 1;
 
+        std::shared_ptr<Texture2D> diffuse_texture;
+        std::shared_ptr<Texture2D> ao_texture;
+
         float reflectance = 0;
 
         if (this->read_next_line() && this->m_current_indent > indent) {
@@ -232,6 +235,10 @@ namespace hw4 {
                     shininess = this->parse_float_attr("mtl::shininess");
                 } else if (cmd == "reflectance") {
                     reflectance = this->parse_float_attr("mtl::reflectance");
+                } else if (cmd == "diffuse_map") {
+                    diffuse_texture = Texture2D::load(this->parse_path_attr("mtl::diffuse_map").string());
+                } else if (cmd == "ao_map") {
+                    ao_texture = Texture2D::load(this->parse_path_attr("mtl::ao_map").string());
                 } else {
                     throw this->syntax_error([&](auto& ss) {
                         ss << "Invalid mtl attribute \"" << cmd << "\"";
@@ -241,9 +248,13 @@ namespace hw4 {
         }
 
         this->m_materials[name] = std::make_shared<Material>(
-            Material::reflective(
-                Material::diffuse(ambient, diffuse, specular, shininess),
-                reflectance
+            Material::textured(
+                Material::reflective(
+                    Material::diffuse(ambient, diffuse, specular, shininess),
+                    reflectance
+                ),
+                diffuse_texture,
+                ao_texture
             )
         );
     }
