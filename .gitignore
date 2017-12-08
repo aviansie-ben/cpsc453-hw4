@@ -1,2 +1,4 @@
 /build
 /scenes/models
+/wrapper/build
+/wrapper/rayTracer
