@@ -40,7 +40,7 @@ namespace hw4 {
     }
 
     void RayTraceRenderer::update_params() {
-        this->m_img_plane_distance = this->m_size.x / (std::tan(this->m_hfov / 2) * 2.0f);
+        this->m_img_plane_distance = this->m_size.x / (std::tan(this->m_camera.hfov() / 2) * 2.0f);
         this->m_sample_spacing = 1.0 / (this->m_supersample_level + 1);
         this->m_sample_mult = 1.0 / (this->m_supersample_level * this->m_supersample_level);
     }
@@ -74,10 +74,9 @@ namespace hw4 {
 
     Image RayTraceRenderer::render(
         const Scene& scene,
-        const glm::mat4& view_matrix,
         std::function<void (float)> progress_callback
     ) const {
-        auto inv_view_matrix = glm::inverse(view_matrix);
+        auto inv_view_matrix = glm::inverse(this->m_camera.as_matrix());
         auto next_progress_update = std::chrono::steady_clock::now() + std::chrono::milliseconds(100);
 
         std::mutex mut;
@@ -206,9 +205,9 @@ namespace hw4 {
 
         for (int y = 0; y < this->m_supersample_level; y++) {
             for (int x = 0; x < this->m_supersample_level; x++) {
-                auto pos = glm::vec3(
+                auto pos = -glm::vec3(
                     ipos.x + this->m_sample_spacing * (x + 1) - this->m_size.x / 2,
-                    -(ipos.y + this->m_sample_spacing * (y + 1) - this->m_size.y / 2),
+                    ipos.y + this->m_sample_spacing * (y + 1) - this->m_size.y / 2,
                     this->m_img_plane_distance
                 );
 

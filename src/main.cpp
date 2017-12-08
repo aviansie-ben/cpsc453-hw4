@@ -21,6 +21,7 @@ namespace hw4 {
         glm::ivec2 size;
 
         boost::filesystem::path scene;
+        std::string camera;
         boost::filesystem::path output;
     };
 
@@ -135,14 +136,13 @@ namespace hw4 {
     void render_with_progress(
         const RayTraceRenderer& r,
         const Scene& s,
-        const glm::mat4& vm,
         Image& i
     ) {
         std::atomic<float> progress(0);
 
         wait_with_spinner_and_progress(
             std::async([&]() {
-                i = r.render(s, vm, [&](float p) {
+                i = r.render(s, [&](float p) {
                     progress.store(p);
                 });
             }),
@@ -152,12 +152,12 @@ namespace hw4 {
         );
     }
 
-    void show_scene(const Scene& scene, const glm::mat4& transform, const ProgramOptions& options) {
+    void show_scene(const Scene& scene, const Camera& camera, const ProgramOptions& options) {
         RayTraceRenderer render(
             glm::ivec2(160, 120),
-            glm::radians(90.0f),
             options.max_recursion,
-            2
+            2,
+            camera
         );
         Image img;
 
@@ -165,19 +165,18 @@ namespace hw4 {
         render_with_progress(
             render,
             scene,
-            transform,
             img
         );
 
         print_image(img, std::cout);
     }
 
-    void render_scene(const Scene& scene, const glm::mat4& transform, const ProgramOptions& options) {
+    void render_scene(const Scene& scene, const Camera& camera, const ProgramOptions& options) {
         RayTraceRenderer render(
             options.size,
-            glm::radians(90.0f),
             options.max_recursion,
-            options.supersample_level
+            options.supersample_level,
+            camera
         );
         Image img;
 
@@ -185,7 +184,6 @@ namespace hw4 {
         render_with_progress(
             render,
             scene,
-            transform,
             img
         );
 
@@ -241,6 +239,13 @@ namespace hw4 {
         po::options_description render_options("Render Options");
         render_options.add_options()
             ("no-preview", "Skip generating a preview image")
+            (
+                "camera,c",
+                po::value<std::string>()
+                    ->value_name("<camera name>")
+                    ->default_value("default"),
+                "Sets the name of the camera from the scene to use for rendering"
+            )
             (
                 "supersample",
                 po::value<int>()
@@ -317,6 +322,7 @@ namespace hw4 {
         result.size = vm["size"].as<option_ivec2>();
 
         result.scene = vm["scene"].as<std::string>();
+        result.camera = vm["camera"].as<std::string>();
         result.output = vm["-o"].as<std::string>();
 
         return result;
@@ -330,11 +336,25 @@ namespace hw4 {
         }
 
         Scene scene;
-        auto transform = glm::translate(glm::mat4(), glm::vec3(0, -1, 3));
+        Camera camera;
 
         std::cout << "Loading scene...";
         wait_with_spinner(std::async([&]() {
             scene = Scene::load_scene(options->scene);
+
+            auto camera_it = scene.cameras().find(options->camera);
+
+            if (camera_it == scene.cameras().end()) {
+                throw std::runtime_error(([&]() {
+                    std::ostringstream ss;
+
+                    ss << "Scene does not contain a camera \"" << options->camera << "\"";
+
+                    return ss.str();
+                })());
+            }
+
+            camera = camera_it->second;
         }));
 
         std::cout << "Building mesh BVHs...";
@@ -347,8 +367,8 @@ namespace hw4 {
             scene.regen_bvh(100);
         }));
 
-        if (!options->no_preview) show_scene(scene, transform, *options);
-        render_scene(scene, transform, *options);
+        if (!options->no_preview) show_scene(scene, camera, *options);
+        render_scene(scene, camera, *options);
 
         return 0;
     }

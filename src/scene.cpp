@@ -37,6 +37,7 @@ namespace hw4 {
         void parse_plight();
         void parse_obj_mesh();
         void parse_obj_sphere();
+        void parse_camera();
     public:
         SceneLoader(
             Scene* scene,
@@ -405,7 +406,7 @@ namespace hw4 {
 
                     mtl = mtl_it->second;
                 } else if (cmd == "pos") {
-                    pos = this->parse_vec3_attr("pos");
+                    pos = this->parse_vec3_attr("obj::pos");
                 } else if (cmd == "scale") {
                     scale = this->parse_float_attr("obj::scale");
                 } else if (cmd == "mdl" || cmd == "rot") {
@@ -431,6 +432,52 @@ namespace hw4 {
             pos,
             mtl
         ));
+    }
+
+    void SceneLoader::parse_camera() {
+        if (this->m_current_line.size() != 2) {
+            throw this->syntax_error([&](auto& ss) {
+                ss << "Wrong number of arguments for cam command";
+            });
+        }
+
+        if (this->m_scene->cameras().find(this->m_current_line[1]) != this->m_scene->cameras().end()) {
+            throw this->syntax_error([&](auto& ss) {
+                ss << "A camera \"" << this->m_current_line[1] << "\" already exists";
+            });
+        }
+
+        auto name = this->m_current_line[1];
+        size_t indent = this->m_current_indent;
+
+        auto pos = glm::vec3(0, 0, 1);
+        auto look_at = glm::vec3(0, 0, 0);
+        auto up = glm::vec3(0, 1, 0);
+        float hfov = 90.0f;
+
+        if (this->read_next_line() && this->m_current_indent > indent) {
+            indent = this->m_current_indent;
+
+            do {
+                const auto& cmd = this->m_current_line[0];
+
+                if (cmd == "pos") {
+                    pos = this->parse_vec3_attr("cam::pos");
+                } else if (cmd == "lookat") {
+                    look_at = this->parse_vec3_attr("cam::lookat");
+                } else if (cmd == "up") {
+                    up = this->parse_vec3_attr("cam::up");
+                } else if (cmd == "hfov") {
+                    hfov = this->parse_float_attr("cam::hfov");
+                } else {
+                    throw this->syntax_error([&](auto& ss) {
+                        ss << "Invalid cam attribute \"" << cmd << "\"";
+                    });
+                }
+            } while (this->read_next_line() && this->m_current_indent == indent);
+        }
+
+        this->m_scene->cameras().emplace(name, Camera(pos, look_at, up, glm::radians(hfov)));
     }
 
     void SceneLoader::load() {
@@ -473,6 +520,8 @@ namespace hw4 {
                         ss << "Invalid object type \"" << type << "\"";
                     });
                 }
+            } else if (cmd == "cam") {
+                this->parse_camera();
             } else {
                 throw this->syntax_error([&](auto& ss) {
                     ss << "Invalid scene command \"" << cmd << "\"";

@@ -84,9 +84,9 @@ namespace hw4 {
 
     class RayTraceRenderer {
         glm::ivec2 m_size;
-        float m_hfov;
         int m_max_recursion;
         int m_supersample_level;
+        Camera m_camera;
 
         float m_img_plane_distance;
         float m_sample_spacing;
@@ -94,20 +94,19 @@ namespace hw4 {
 
         void update_params();
     public:
-        RayTraceRenderer(glm::ivec2 size, float hfov, int max_recursion, int supersample_level)
-            : m_size(size), m_hfov(hfov), m_max_recursion(max_recursion),
-              m_supersample_level(supersample_level) {
+        RayTraceRenderer(glm::ivec2 size, int max_recursion, int supersample_level, Camera camera)
+            : m_size(size), m_max_recursion(max_recursion), m_supersample_level(supersample_level),
+              m_camera(camera) {
             this->update_params();
         }
 
         glm::ivec2 size() const { return this->m_size; }
-        float hfov() const { return this->m_hfov; }
         int max_recursion() const { return this->m_max_recursion; }
         int supersample_level() const { return this->m_supersample_level; }
+        const Camera& camera() const { return this->m_camera; }
 
         Image render(
             const Scene& scene,
-            const glm::mat4& view_matrix,
             std::function<void (float)> progress_callback
         ) const;
         Image render_patch(
