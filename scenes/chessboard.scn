@@ -1,0 +1,362 @@
+mdl table models/oak_table/oak_table.obj
+mtl table
+  ambient 1 1 1
+  diffuse 1 1 1
+  specular 1 1 1
+  shininess 5
+
+  # diffuse_map models/oak_table/oak_table.colour.jpg
+  # ao_map models/oak_table/oak_table.ao.png
+
+mdl chair models/oak_chair/oak_chair.obj
+mtl chair
+  ambient 1 1 1
+  diffuse 1 1 1
+  specular 1 1 1
+  shininess 5
+
+  # diffuse_map models/oak_chair/oak_table.colour.jpg
+  # ao_map models/oak_chair/oak_chair.ao.png
+
+mdl board models/chess_board/board.obj
+mtl board
+  ambient 0.9 0.9 0.9
+  diffuse 0.9 0.9 0.9
+  specular 1 1 1
+  shininess 10
+
+  reflectance 0.1
+
+  # diffuse_map models/chess_board/board.colour.png
+  # ao_map models/chess_board/board.ao.png
+
+mdl pawn models/chess_pawn/pawn.obj
+mdl rook models/chess_rook/rook.obj
+mdl bishop models/chess_bishop/bishop.obj
+mdl knight models/chess_knight/knight.obj
+mdl queen models/chess_queen/queen.obj
+mdl king models/chess_king/king.obj
+
+mtl chess_white
+  ambient 1 1 1
+  diffuse 1 1 1
+  specular 1 1 1
+  shininess 100
+
+  reflectance 0.5
+mtl chess_black
+  ambient 0.1 0.1 0.1
+  diffuse 0.1 0.1 0.1
+  specular 0.1 0.1 0.1
+  shininess 100
+
+  reflectance 0.5
+
+plight
+  pos 0 3 0
+
+  ambient 1 0.8 0.5
+  diffuse 1 0.8 0.5
+  specular 1 0.8 0.5
+  atten 1 0 8
+
+plight
+  pos 0 6 0
+
+  ambient 1 0.6 0
+  diffuse 1 0.6 0
+  specular 1 0.6 0
+  atten 64 0 0.4
+
+obj mesh
+  mdl table
+  mtl table
+
+  pos 0 0 0
+  rot 0 0 0
+
+obj mesh
+  mdl chair
+  mtl chair
+
+  pos -2.67504 0 -0.325098
+  rot 3.95771 0 0
+  scale 1.5
+
+obj mesh
+  mdl chair
+  mtl chair
+
+  pos 2.37505 0 0
+  rot 1.53968 0 0
+  scale 1.5
+
+obj mesh
+  mdl board
+  mtl board
+
+  pos -0.124247 2.41266 0.0313932
+  rot 0 0 0
+  scale 0.138018
+
+obj mesh
+  mdl pawn
+  mtl chess_white
+
+  pos -0.510522 2.40867 -0.621398
+  rot 0 0 0
+  scale 0.11118
+
+obj mesh
+  mdl pawn
+  mtl chess_white
+
+  pos -0.257893 2.40867 -0.110785
+  rot 0 0 0
+  scale 0.11118
+
+obj mesh
+  mdl pawn
+  mtl chess_white
+
+  pos -0.767752 2.40867 0.43288
+  rot 0 0 0
+  scale 0.11118
+
+obj mesh
+  mdl pawn
+  mtl chess_white
+
+  pos -0.781557 2.40867 0.688457
+  rot 0 0 0
+  scale 0.11118
+
+obj mesh
+  mdl pawn
+  mtl chess_white
+
+  pos -0.770182 2.40867 0.94783
+  rot 0 0 0
+  scale 0.11118
+
+obj mesh
+  mdl pawn
+  mtl chess_white
+
+  pos 0.359481 2.39334 -1.16159
+  rot 0 0 0
+  scale 0.11118
+
+obj mesh
+  mdl pawn
+  mtl chess_white
+
+  pos -0.07545 2.39334 -1.25502
+  rot 0 0 0
+  scale 0.11118
+
+obj mesh
+  mdl pawn
+  mtl chess_white
+
+  pos 0.075359 2.39334 -1.52205
+  rot 0 0 0
+  scale 0.11118
+
+obj mesh
+  mdl pawn
+  mtl chess_black
+
+  pos 0.0094263 2.40867 -0.856098
+  rot 0 0 0
+  scale 0.11118
+
+obj mesh
+  mdl pawn
+  mtl chess_black
+
+  pos 0.519022 2.40867 -0.580319
+  rot 0 0 0
+  scale 0.11118
+
+obj mesh
+  mdl pawn
+  mtl chess_black
+
+  pos 0.251179 2.40867 -0.327315
+  rot 0 0 0
+  scale 0.11118
+
+obj mesh
+  mdl pawn
+  mtl chess_black
+
+  pos 0.257707 2.40867 0.172706
+  rot 0 0 0
+  scale 0.11118
+
+obj mesh
+  mdl pawn
+  mtl chess_black
+
+  pos 0.272901 2.40867 0.933457
+  rot 0 0 0
+  scale 0.11118
+
+obj mesh
+  mdl pawn
+  mtl chess_black
+
+  pos -0.671958 2.39334 -1.14438
+  rot 0 0 0
+  scale 0.11118
+
+obj mesh
+  mdl pawn
+  mtl chess_black
+
+  pos -0.567541 2.39334 -1.5716
+  rot 0 0 0
+  scale 0.11118
+
+obj mesh
+  mdl pawn
+  mtl chess_black
+
+  pos -0.899393 2.39334 -1.23588
+  rot 0 0 0
+  scale 0.11118
+
+obj mesh
+  mdl rook
+  mtl chess_white
+
+  pos -1.02245 2.40867 -0.350672
+  rot 5.73842 0 0
+  scale 0.11118
+
+obj mesh
+  mdl rook
+  mtl chess_white
+
+  pos -1.01672 2.40867 -0.0842097
+  rot 2.27349 0 0
+  scale 0.11118
+
+obj mesh
+  mdl rook
+  mtl chess_black
+
+  pos 0.767763 2.40867 -0.840523
+  rot 0.129935 0 0
+  scale 0.11118
+
+obj mesh
+  mdl rook
+  mtl chess_black
+
+  pos 0.768266 2.40867 0.421405
+  rot 5.12525 0 0
+  scale 0.11118
+
+obj mesh
+  mdl bishop
+  mtl chess_white
+
+  pos 0.00503048 2.40867 0.927848
+  rot 3.68414 0 0
+  scale 0.11118
+
+obj mesh
+  mdl bishop
+  mtl chess_white
+
+  pos -0.506026 2.40867 0.167821
+  rot 4.41835 0 0
+  scale 0.11118
+
+obj mesh
+  mdl bishop
+  mtl chess_black
+
+  pos 0.52141 2.40867 0.68212
+  rot 3.99081 0 0
+  scale 0.11118
+
+obj mesh
+  mdl bishop
+  mtl chess_black
+
+  pos 0.775042 2.40867 -0.331976
+  rot 4.1484 0 0
+  scale 0.11118
+
+obj mesh
+  mdl knight
+  mtl chess_white
+
+  pos -0.26434 2.40867 0.162055
+  rot 2.24609 0 0
+  scale 0.11118
+
+obj mesh
+  mdl knight
+  mtl chess_white
+
+  pos 0.159104 2.39334 -1.20101
+  rot 4.1484 0 0
+  scale 0.11118
+
+obj mesh
+  mdl knight
+  mtl chess_black
+
+  pos 0.528975 2.40867 -0.093146
+  rot 5.04337 0 0
+  scale 0.11118
+
+obj mesh
+  mdl knight
+  mtl chess_black
+
+  pos 0.254609 2.40867 -0.607352
+  rot 4.02713 0 0
+  scale 0.11118
+
+obj mesh
+  mdl queen
+  mtl chess_white
+
+  pos -0.77008 2.40867 -0.346347
+  rot 4.82512 0 0
+  scale 0.11118
+
+obj mesh
+  mdl queen
+  mtl chess_black
+
+  pos 0.529943 2.40867 0.167126
+  rot 5.35003 0 0
+  scale 0.11118
+
+obj mesh
+  mdl king
+  mtl chess_white
+
+  pos -1.02641 2.40867 0.680187
+  rot 4.92717 0 0
+  scale 0.11118
+
+obj mesh
+  mdl king
+  mtl chess_black
+
+  pos 0.260503 2.40867 0.694136
+  rot 4.02778 0 0
+  scale 0.11118
+
+cam default
+  pos 0 4.5 -2
+  lookat 0 2 0
+  up 0 1 0
+  hfov 90

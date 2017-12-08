@@ -17,10 +17,10 @@ def main():
             '--supersample',
             '4',
             '-s',
-            '512,512',
+            '910,512',
             '-o',
             'yours.ppm',
-            Path(p, '../scenes/knight.scn')
+            Path(p, '../scenes/chessboard.scn')
         ])
     elif len(sys.argv) == 2 and sys.argv[1] == '--default':
         # TODO: Implement this
