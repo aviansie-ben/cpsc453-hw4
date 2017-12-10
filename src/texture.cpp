@@ -23,7 +23,7 @@ namespace hw4 {
 
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                int off = y * height + x;
+                int off = y * width + x;
 
                 data_copy[off] = glm::vec3(
                     static_cast<float>(data[off * 3]) / 255,
