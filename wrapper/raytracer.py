@@ -23,8 +23,17 @@ def main():
             Path(p, '../scenes/chessboard.scn')
         ])
     elif len(sys.argv) == 2 and sys.argv[1] == '--default':
-        # TODO: Implement this
-        print('Not yet implemented', file=sys.stderr)
+        subprocess.run([
+            Path(p, 'build/hw4'),
+            '--no-preview',
+            '--supersample',
+            '4',
+            '-s',
+            '512,512',
+            '-o',
+            'default.ppm',
+            Path(p, '../scenes/cornell.scn')
+        ])
     else:
         print('Usage: {} {{ --yours | --default }}'.format(sys.argv[0]), file=sys.stderr)
 
