@@ -217,7 +217,11 @@ namespace hw4 {
         std::shared_ptr<Texture2D> diffuse_texture;
         std::shared_ptr<Texture2D> ao_texture;
 
+        float opacity = 1;
+
         float reflectance = 0;
+        float transmittance = 0;
+        float refractive_index = 1;
 
         if (this->read_next_line() && this->m_current_indent > indent) {
             indent = this->m_current_indent;
@@ -233,8 +237,14 @@ namespace hw4 {
                     specular = this->parse_vec3_attr("mtl::specular");
                 } else if (cmd == "shininess") {
                     shininess = this->parse_float_attr("mtl::shininess");
+                } else if (cmd == "opacity") {
+                    opacity = this->parse_float_attr("mtl::opacity");
                 } else if (cmd == "reflectance") {
                     reflectance = this->parse_float_attr("mtl::reflectance");
+                } else if (cmd == "transmittance") {
+                    transmittance = this->parse_float_attr("mtl::transmittance");
+                } else if (cmd == "refractive_index") {
+                    refractive_index = this->parse_float_attr("mtl::refractive_index");
                 } else if (cmd == "diffuse_map") {
                     diffuse_texture = Texture2D::load(this->parse_path_attr("mtl::diffuse_map").string());
                 } else if (cmd == "ao_map") {
@@ -249,9 +259,14 @@ namespace hw4 {
 
         this->m_materials[name] = std::make_shared<Material>(
             Material::textured(
-                Material::reflective(
-                    Material::diffuse(ambient, diffuse, specular, shininess),
-                    reflectance
+                Material::translucent(
+                    Material::reflective(
+                        Material::diffuse(ambient, diffuse, specular, shininess),
+                        reflectance
+                    ),
+                    opacity,
+                    transmittance,
+                    refractive_index
                 ),
                 diffuse_texture,
                 ao_texture

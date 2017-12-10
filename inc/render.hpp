@@ -146,7 +146,7 @@ namespace hw4 {
             const PointMaterial& material,
             const PointLight& point_light
         ) const;
-        bool is_visible(const Scene& scene, glm::vec3 from, glm::vec3 to) const;
+        float get_visibility(const Scene& scene, glm::vec3 from, glm::vec3 to) const;
     };
 }
 

@@ -221,6 +221,15 @@ namespace hw4 {
         return result * this->m_sample_mult;
     }
 
+    void handle_fresnel(
+        const Ray& ray,
+        const glm::vec3& normal,
+        float refractive_index,
+        PointMaterial& mat
+    ) {
+        // TODO Handle Fresnel reflection
+    }
+
     glm::vec3 RayTraceRenderer::render_ray(
         const Scene& scene,
         const Ray& ray,
@@ -254,15 +263,53 @@ namespace hw4 {
                 result += this->render_point_light(scene, ray, i, mat, *plight);
             }
 
+            if (mat.transmittance > 0) {
+                auto normal = i.normal();
+                auto refractive_index = mat.refractive_index;
+
+                if (glm::dot(ray.direction(), i.normal()) < 0) {
+                    refractive_index = 1 / refractive_index;
+                } else {
+                    normal = -normal;
+                }
+
+                handle_fresnel(ray, normal, refractive_index, mat);
+
+                if (mat.transmittance > 0) {
+                    result += mat.transmittance * this->render_ray(
+                        scene,
+                        Ray(
+                            i.point() - normal * this->m_bias,
+                            glm::refract(ray.direction(), normal, refractive_index)
+                        ),
+                        recursion + 1
+                    );
+                }
+            }
+
             if (mat.reflectance > 0) {
-                result += mat.reflectance * this->render_ray(
-                    scene,
-                    Ray(
-                        i.point() + i.normal() * this->m_bias,
-                        glm::reflect(ray.direction(), -i.normal())
-                    ),
-                    recursion + 1
-                );
+                // Normally, we wouldn't have to worry about reflection with the normal in the same
+                // direction as the incident ray, but we do have to worry about this for objects
+                // with refracted rays, since they can reflect from inside the object.
+                if (glm::dot(i.normal(), ray.direction()) < 0) {
+                    result += mat.reflectance * this->render_ray(
+                        scene,
+                        Ray(
+                            i.point() + i.normal() * this->m_bias,
+                            glm::reflect(ray.direction(), i.normal())
+                        ),
+                        recursion + 1
+                    );
+                } else {
+                    result += mat.reflectance * this->render_ray(
+                        scene,
+                        Ray(
+                            i.point() - i.normal() * this->m_bias,
+                            glm::reflect(ray.direction(), i.normal())
+                        ),
+                        recursion + 1
+                    );
+                }
             }
 
             return result;
@@ -281,28 +328,31 @@ namespace hw4 {
         glm::vec3 result;
 
         float attenuation = plight.attenuation(glm::distance(plight.pos(), i.point()));
+        float visibility = this->get_visibility(scene, i.point() + i.normal() * this->m_bias, plight.pos());
 
         result += plight.ambient() * mat.ambient;
 
-        if (this->is_visible(scene, i.point() + i.normal() * this->m_bias, plight.pos())) {
+        if (visibility > 0) {
             glm::vec3 obj_to_light = glm::normalize(plight.pos() - i.point());
 
             result += std::max(glm::dot(i.normal(), obj_to_light), 0.0f)
                 * plight.diffuse()
-                * mat.diffuse;
+                * mat.diffuse
+                * visibility;
 
             result += std::pow(std::max(glm::dot(-ray.direction(), glm::reflect(-obj_to_light, i.normal())), 0.0f), mat.shininess)
                 * plight.specular()
-                * mat.specular;
+                * mat.specular
+                * visibility;
         }
 
         return result * attenuation;
     }
 
-    bool RayTraceRenderer::is_visible(const Scene& scene, glm::vec3 from, glm::vec3 to) const {
+    float RayTraceRenderer::get_visibility(const Scene& scene, glm::vec3 from, glm::vec3 to) const {
         Ray ray = Ray::between(from, to);
         float dist = glm::distance(from, to);
-        bool occluded = false;
+        float visibility = 1;
 
         // TODO Optimize this
         scene.bvh().search(ray, [&](auto& o) {
@@ -313,10 +363,10 @@ namespace hw4 {
             if (!intersection) return;
 
             if (intersection->distance() * dist_mult <= dist) {
-                occluded = true;
+                visibility *= (1 - intersection->material().opacity);
             }
         });
 
-        return !occluded;
+        return visibility;
     }
 }

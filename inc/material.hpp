@@ -10,7 +10,11 @@ namespace hw4 {
         glm::vec3 specular;
         float shininess;
 
+        float opacity;
+
         float reflectance;
+        float transmittance;
+        float refractive_index;
     };
 
     class Material {
@@ -22,7 +26,11 @@ namespace hw4 {
         std::shared_ptr<Texture2D> m_diffuse_texture;
         std::shared_ptr<Texture2D> m_ao_texture;
 
+        float m_opacity = 1;
+
         float m_reflectance = 0;
+        float m_transmittance = 0;
+        float m_refractive_index = 1;
     public:
         PointMaterial at_point(glm::vec2 texcoord) const {
             auto m = PointMaterial {
@@ -31,7 +39,11 @@ namespace hw4 {
                 .specular = this->m_specular,
                 .shininess = this->m_shininess,
 
-                .reflectance = this->m_reflectance
+                .opacity = this->m_opacity,
+
+                .reflectance = this->m_reflectance,
+                .transmittance = this->m_transmittance,
+                .refractive_index = this->m_refractive_index
             };
 
             if (this->m_diffuse_texture) {
@@ -57,6 +69,21 @@ namespace hw4 {
 
             m.m_diffuse_texture = std::move(diffuse_texture);
             m.m_ao_texture = std::move(ao_texture);
+
+            return m;
+        }
+
+        static Material translucent(
+            const Material& diffuse_part,
+            float opacity,
+            float transmittance,
+            float refractive_index
+        ) {
+            Material m = diffuse_part;
+
+            m.m_opacity = opacity;
+            m.m_transmittance = transmittance;
+            m.m_refractive_index = refractive_index;
 
             return m;
         }
