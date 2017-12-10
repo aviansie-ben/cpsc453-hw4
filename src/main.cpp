@@ -18,6 +18,7 @@ namespace hw4 {
         bool no_preview;
         int supersample_level;
         int max_recursion;
+        float bias;
         glm::ivec2 size;
 
         boost::filesystem::path scene;
@@ -157,6 +158,7 @@ namespace hw4 {
             glm::ivec2(160, 120),
             options.max_recursion,
             2,
+            options.bias,
             camera
         );
         Image img;
@@ -176,6 +178,7 @@ namespace hw4 {
             options.size,
             options.max_recursion,
             options.supersample_level,
+            options.bias,
             camera
         );
         Image img;
@@ -261,6 +264,13 @@ namespace hw4 {
                 "Allow a maximum of n recursive rays to be traced (0 renders only view rays)"
             )
             (
+                "bias",
+                po::value<float>()
+                    ->value_name("<v>")
+                    ->default_value(1e-3f),
+                "Use a bias of v units along the surface normal for recursive rays"
+            )
+            (
                 "size,s",
                 po::value<option_ivec2>()
                     ->value_name("<w>,<h>")
@@ -319,6 +329,7 @@ namespace hw4 {
         result.no_preview = vm.count("no-preview") > 0;
         result.supersample_level = vm["supersample"].as<int>();
         result.max_recursion = vm["max-recursion"].as<int>();
+        result.bias = vm["bias"].as<float>();
         result.size = vm["size"].as<option_ivec2>();
 
         result.scene = vm["scene"].as<std::string>();

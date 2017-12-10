@@ -257,7 +257,10 @@ namespace hw4 {
             if (mat.reflectance > 0) {
                 result += mat.reflectance * this->render_ray(
                     scene,
-                    Ray(i.point(), glm::reflect(ray.direction(), -i.normal())).adjust(0.001f),
+                    Ray(
+                        i.point() + i.normal() * this->m_bias,
+                        glm::reflect(ray.direction(), -i.normal())
+                    ),
                     recursion + 1
                 );
             }
@@ -281,7 +284,7 @@ namespace hw4 {
 
         result += plight.ambient() * mat.ambient;
 
-        if (this->is_visible(scene, i.point(), plight.pos())) {
+        if (this->is_visible(scene, i.point() + i.normal() * this->m_bias, plight.pos())) {
             glm::vec3 obj_to_light = glm::normalize(plight.pos() - i.point());
 
             result += std::max(glm::dot(i.normal(), obj_to_light), 0.0f)
@@ -297,8 +300,8 @@ namespace hw4 {
     }
 
     bool RayTraceRenderer::is_visible(const Scene& scene, glm::vec3 from, glm::vec3 to) const {
-        Ray ray = Ray::between(from, to).adjust(0.001f);
-        float dist = std::max(glm::distance(from, to) - 0.001f, 0.0f);
+        Ray ray = Ray::between(from, to);
+        float dist = glm::distance(from, to);
         bool occluded = false;
 
         // TODO Optimize this

@@ -86,6 +86,7 @@ namespace hw4 {
         glm::ivec2 m_size;
         int m_max_recursion;
         int m_supersample_level;
+        float m_bias;
         Camera m_camera;
 
         float m_img_plane_distance;
@@ -94,9 +95,15 @@ namespace hw4 {
 
         void update_params();
     public:
-        RayTraceRenderer(glm::ivec2 size, int max_recursion, int supersample_level, Camera camera)
+        RayTraceRenderer(
+            glm::ivec2 size,
+            int max_recursion,
+            int supersample_level,
+            float bias,
+            Camera camera
+        )
             : m_size(size), m_max_recursion(max_recursion), m_supersample_level(supersample_level),
-              m_camera(camera) {
+              m_bias(bias), m_camera(camera) {
             this->update_params();
         }
 
