@@ -30,6 +30,12 @@ mtl board
   diffuse_map models/chess_board/board.colour.png
   ao_map models/chess_board/board.ao.png
 
+mdl floor models/floor/floor.obj
+mtl floor
+  ambient 0.4 0.2 0.01
+  diffuse 0.4 0.2 0.01
+  specular 0 0 0
+
 mdl pawn models/chess_pawn/pawn.obj
 mdl rook models/chess_rook/rook.obj
 mdl bishop models/chess_bishop/bishop.obj
@@ -38,19 +44,23 @@ mdl queen models/chess_queen/queen.obj
 mdl king models/chess_king/king.obj
 
 mtl chess_white
-  ambient 1 1 1
-  diffuse 1 1 1
-  specular 1 1 1
+  ambient 0.6 0.6 0.6
+  diffuse 0.6 0.6 0.6
+  specular 0.6 0.6 0.6
   shininess 100
 
-  reflectance 0.5
+  reflectance 0.4
 mtl chess_black
   ambient 0.1 0.1 0.1
   diffuse 0.1 0.1 0.1
   specular 1 1 1
   shininess 100
 
-  reflectance 0.5
+  opacity 0.3
+
+  reflectance 0.2
+  transmittance 0.7
+  refractive_index 1.6
 
 plight
   pos 0 3 0
@@ -98,6 +108,12 @@ obj mesh
   pos -0.124247 2.41266 0.0313932
   rot 0 0 0
   scale 0.138018
+
+obj mesh
+  mdl floor
+  mtl floor
+
+  scale 25
 
 obj mesh
   mdl pawn
@@ -357,6 +373,12 @@ obj mesh
 
 cam default
   pos 0 4.5 -2
+  lookat 0 2 0
+  up 0 1 0
+  hfov 90
+
+cam far
+  pos 0 8 -5
   lookat 0 2 0
   up 0 1 0
   hfov 90
