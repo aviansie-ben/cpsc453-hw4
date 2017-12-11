@@ -221,15 +221,6 @@ namespace hw4 {
         return result * this->m_sample_mult;
     }
 
-    void handle_fresnel(
-        const Ray& ray,
-        const glm::vec3& normal,
-        float refractive_index,
-        PointMaterial& mat
-    ) {
-        // TODO Handle Fresnel reflection
-    }
-
     glm::vec3 RayTraceRenderer::render_ray(
         const Scene& scene,
         const Ray& ray,
@@ -273,17 +264,19 @@ namespace hw4 {
                     normal = -normal;
                 }
 
-                handle_fresnel(ray, normal, refractive_index, mat);
+                auto refracted = glm::refract(ray.direction(), normal, refractive_index);
 
-                if (mat.transmittance > 0) {
+                if (!std::isnan(refracted.x)) {
                     result += mat.transmittance * this->render_ray(
                         scene,
                         Ray(
                             i.point() - normal * this->m_bias,
-                            glm::refract(ray.direction(), normal, refractive_index)
+                            refracted
                         ),
                         recursion + 1
                     );
+                } else {
+                    mat.reflectance += mat.transmittance;
                 }
             }
 
