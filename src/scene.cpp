@@ -33,7 +33,6 @@ namespace hw4 {
 
         void parse_mdl();
         void parse_mtl();
-        void parse_alight();
         void parse_plight();
         void parse_obj_mesh();
         void parse_obj_sphere();
@@ -274,13 +273,6 @@ namespace hw4 {
         );
     }
 
-    void SceneLoader::parse_alight() {
-        // TODO Implement this
-        throw this->syntax_error([&](auto& ss) {
-            ss << "Unimplemented command: alight";
-        });
-    }
-
     void SceneLoader::parse_plight() {
         if (this->m_current_line.size() != 1) {
             throw this->syntax_error([&](auto& ss) {
@@ -295,8 +287,6 @@ namespace hw4 {
         auto diffuse = glm::vec3(0);
         auto specular = glm::vec3(0);
         auto attenuation = glm::vec3(0);
-
-        // TODO Handle texture mapping
 
         if (this->read_next_line() && this->m_current_indent > indent) {
             indent = this->m_current_indent;
@@ -524,8 +514,6 @@ namespace hw4 {
                 this->parse_mdl();
             } else if (cmd == "mtl") {
                 this->parse_mtl();
-            } else if (cmd == "alight") {
-                this->parse_alight();
             } else if (cmd == "plight") {
                 this->parse_plight();
             } else if (cmd == "obj") {
