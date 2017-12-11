@@ -204,5 +204,6 @@ The following commands and attributes are available:
 - [GLM API Reference](https://glm.g-truc.net/0.9.4/api/index.html)
 - [Ray Tracing Refraction](https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-shading/reflection-refraction-fresnel)
 - [Möller-Trumbore Algorithm](https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm)
+- [BVH Construction using Approximate Agglomerative Clustering](http://graphics.cs.cmu.edu/projects/aac/)
 - Some code was loosely based on the skeleton code written by Karl Augsten
 - Lots of code and scenes adapted from HW3
