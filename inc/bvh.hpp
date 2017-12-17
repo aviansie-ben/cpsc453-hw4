@@ -39,57 +39,33 @@ namespace hw4 {
         }
 
         bool intersects(const Ray& r) const {
-            // Calculate the range for t in the x direction. Note that if r has no x component, the
-            // range will properly come out to be -Infinity to Infinity.
-            float tmin = (this->m_min.x - r.origin().x) * r.inv_direction().x;
-            float tmax = (this->m_max.x - r.origin().x) * r.inv_direction().x;
+            float tmin, tmax;
 
-            if (tmin > tmax) {
-                std::swap(tmin, tmax);
+            {
+                float tx1 = (this->m_min.x - r.origin().x) * r.inv_direction().x;
+                float tx2 = (this->m_max.x - r.origin().x) * r.inv_direction().x;
+
+                tmin = std::min(tx1, tx2);
+                tmax = std::max(tx1, tx2);
             }
 
             {
-                // Calculate the range for t in the y direction.
-                float tymin = (this->m_min.y - r.origin().y) * r.inv_direction().y;
-                float tymax = (this->m_max.y - r.origin().y) * r.inv_direction().y;
+                float ty1 = (this->m_min.y - r.origin().y) * r.inv_direction().y;
+                float ty2 = (this->m_max.y - r.origin().y) * r.inv_direction().y;
 
-                if (tymin > tymax) {
-                    std::swap(tymin, tymax);
-                }
-
-                // If the calculated range was outside of the existing range, then the ray does not
-                // intersect.
-                if (tymin > tmax || tymax < tmin) {
-                    return false;
-                }
-
-                // Update the known range for t.
-                tmin = std::max(tmin, tymin);
-                tmax = std::min(tmax, tymax);
+                tmin = std::max(tmin, std::min(ty1, ty2));
+                tmax = std::min(tmax, std::max(ty1, ty2));
             }
 
             {
-                // Calculate the range for t in the z direction.
-                float tzmin = (this->m_min.z - r.origin().z) * r.inv_direction().z;
-                float tzmax = (this->m_max.z - r.origin().z) * r.inv_direction().z;
+                float tz1 = (this->m_min.z - r.origin().z) * r.inv_direction().z;
+                float tz2 = (this->m_max.z - r.origin().z) * r.inv_direction().z;
 
-                if (tzmin > tzmax) {
-                    std::swap(tzmin, tzmax);
-                }
-
-                // If the calculated range was outside of the existing range, then the ray does not
-                // intersect.
-                if (tzmin > tmax || tzmax < tmin) {
-                    return false;
-                }
-
-                // We could update tmin and tmax here, but we don't do any more checks, so that would be
-                // redundant.
+                tmin = std::max(tmin, std::min(tz1, tz2));
+                tmax = std::min(tmax, std::max(tz1, tz2));
             }
 
-            // Now that we know the range for t, we can assume that the ray will intersect if the range
-            // for t includes some non-negative number.
-            return tmax > 0;
+            return tmax >= tmin && tmax > 0;
         }
 
         static BoundingBox combine(BoundingBox a, BoundingBox b) {
