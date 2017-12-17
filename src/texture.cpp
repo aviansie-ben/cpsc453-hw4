@@ -1,3 +1,4 @@
+#include <cmath>
 #include <sstream>
 
 #include <stb_image.h>
@@ -26,9 +27,9 @@ namespace hw4 {
                 int off = y * width + x;
 
                 data_copy[off] = glm::vec3(
-                    static_cast<float>(data[off * 3]) / 255,
-                    static_cast<float>(data[off * 3 + 1]) / 255,
-                    static_cast<float>(data[off * 3 + 2]) / 255
+                    std::pow(static_cast<float>(data[off * 3]) / 255, 2.2),
+                    std::pow(static_cast<float>(data[off * 3 + 1]) / 255, 2.2),
+                    std::pow(static_cast<float>(data[off * 3 + 2]) / 255, 2.2)
                 );
             }
         }
