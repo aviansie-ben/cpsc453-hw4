@@ -11,6 +11,30 @@ mtl white
   specular 0.3 0.3 0.3
   shininess 1
 
+mtl armadyl_in_bondage
+  ambient 1 1 1
+  diffuse 1 1 1
+  specular 0.2 0.2 0.2
+  shininess 1
+
+  diffuse_map /home/ben/Pictures/gay-armadyl/armadyl-in-bondage.jpg
+
+mtl armadyl_being_fucked_by_mordaut
+  ambient 1 1 1
+  diffuse 1 1 1
+  specular 0.2 0.2 0.2
+  shininess 1
+
+  diffuse_map /home/ben/Pictures/gay-armadyl/armadyl-being-fucked-by-mordaut.jpg
+
+mtl armadyl_begging_for_mordaut_to_fuck_him
+  ambient 1 1 1
+  diffuse 1 1 1
+  specular 0.2 0.2 0.2
+  shininess 1
+
+  diffuse_map /home/ben/Pictures/gay-armadyl/armadyl-begging-for-mordaut-to-fuck-him.jpg
+
 mtl red
   ambient 0.3 0.01 0.01
   diffuse 0.3 0.01 0.01
@@ -38,15 +62,15 @@ mtl mirror
   reflectance 0.97
 
 mtl translucent
-  ambient 0 0 0
-  diffuse 0 0 0
-  specular 0 0 0
+  ambient 0.01 0.01 0.01
+  diffuse 0.01 0.01 0.01
+  specular 0.01 0.01 0.01
   shininess 500
 
   opacity 0.2
 
   transmittance 1
-  refractive_index 1.125
+  refractive_index 1.040
 
 plight
   pos 185 2000 169
@@ -70,15 +94,15 @@ obj mesh
 
 obj mesh
   mdl wall_back
-  mtl green
+  mtl armadyl_being_fucked_by_mordaut
 
 obj mesh
   mdl wall_left
-  mtl white
+  mtl armadyl_in_bondage
 
 obj mesh
   mdl wall_right
-  mtl blue
+  mtl armadyl_begging_for_mordaut_to_fuck_him
 
 obj sphere
   mtl mirror

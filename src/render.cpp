@@ -1,14 +1,17 @@
 #include <chrono>
 #include <cmath>
-#include <condition_variable>
 #include <exception>
 #include <iostream>
 #include <limits>
-#include <mutex>
 #include <queue>
 #include <sstream>
 #include <stdexcept>
+
+#if HW4_ENABLE_THREADS
+#include <condition_variable>
+#include <mutex>
 #include <thread>
+#endif
 
 #include "render.hpp"
 
@@ -50,11 +53,6 @@ namespace hw4 {
         glm::ivec2 size;
     };
 
-    struct PatchJobResult {
-        PatchJob job;
-        Image img;
-    };
-
     static void create_patch_jobs(
         std::queue<PatchJob>& job_queue,
         glm::ivec2 image_size,
@@ -71,6 +69,12 @@ namespace hw4 {
             }
         }
     }
+
+#ifdef HW4_ENABLE_THREADS
+    struct PatchJobResult {
+        PatchJob job;
+        Image img;
+    };
 
     Image RayTraceRenderer::render(
         const Scene& scene,
@@ -165,6 +169,47 @@ namespace hw4 {
 
         return img;
     }
+#else
+    Image RayTraceRenderer::render(
+        const Scene& scene,
+        std::function<void (float)> progress_callback
+    ) const {
+        auto inv_view_matrix = glm::inverse(this->m_camera.as_matrix());
+        auto next_progress_update = std::chrono::steady_clock::now() + std::chrono::milliseconds(100);
+
+        std::queue<PatchJob> job_queue;
+        int total_jobs;
+        int remaining_jobs;
+
+        create_patch_jobs(job_queue, this->m_size, glm::ivec2(8, 8));
+        total_jobs = remaining_jobs = job_queue.size();
+
+        Image img(this->m_size);
+
+        while (!job_queue.empty()) {
+            if (std::chrono::steady_clock::now() >= next_progress_update) {
+                progress_callback(static_cast<float>(total_jobs - remaining_jobs) / total_jobs);
+                next_progress_update = std::chrono::steady_clock::now() + std::chrono::milliseconds(100);
+            }
+
+            PatchJob job = std::move(job_queue.front());
+
+            job_queue.pop();
+            remaining_jobs--;
+
+            Image patch = this->render_patch(
+                scene,
+                inv_view_matrix,
+                job.pos,
+                job.size
+            );
+
+            img.copy_data(patch, job.pos);
+        }
+
+        return img;
+    }
+#endif
 
     Image RayTraceRenderer::render_patch(
         const Scene& scene,

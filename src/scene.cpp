@@ -1,3 +1,4 @@
+#include <iostream>
 #include <map>
 #include <sstream>
 
@@ -74,7 +75,7 @@ namespace hw4 {
             }
 
             size_t indent = count_indentation(line);
-            boost::trim(line);
+            boost::trim_if(line, boost::is_any_of(" \t"));
 
             this->m_current_line_number++;
 
@@ -102,6 +103,8 @@ namespace hw4 {
 
         ss << "Syntax error on line " << this->m_current_line_number << ": ";
         fn(ss);
+
+        std::cout << ss.str() << std::endl;
 
         return std::runtime_error(ss.str());
     }

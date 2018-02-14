@@ -1,7 +1,10 @@
+#ifdef HW4_ENABLE_THREADS
 #include <atomic>
+#include <future>
+#endif
+
 #include <chrono>
 #include <cstdlib>
-#include <future>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -50,6 +53,7 @@ namespace hw4 {
         s << std::flush;
     }
 
+#ifdef HW4_ENABLE_THREADS
     void wait_with_spinner(std::future<void> f) {
         int state = 0;
 
@@ -85,6 +89,10 @@ namespace hw4 {
         }
 
         std::cout << "DONE" << std::endl;
+    }
+
+    void wait_with_spinner(const std::function<void ()>& fn) {
+        wait_with_spinner(std::async(fn));
     }
 
     void wait_with_spinner_and_progress(
@@ -152,6 +160,45 @@ namespace hw4 {
             }
         );
     }
+#else
+    void wait_with_spinner(const std::function<void ()>& fn) {
+        std::cout << " " << std::flush;
+        try {
+            fn();
+        } catch (std::exception& e) {
+            std::cout << "\033[KFAIL\n" << e.what() << std::endl;
+            std::exit(1);
+        }
+
+        std::cout << "\033[KDONE" << std::endl;
+    }
+
+    void render_with_progress(
+        const RayTraceRenderer& r,
+        const Scene& s,
+        Image& i
+    ) {
+        std::cout << " " << std::flush;
+        auto render_progress = [](float p) {
+            std::ostringstream ss;
+
+            ss << std::fixed << std::setprecision(2) << p * 100 << "%";
+
+            std::cout << "\033[K" << ss.str();
+            std::cout << "\033[" << ss.str().size() << "D" << std::flush;
+        };
+
+        try {
+            render_progress(0);
+            i = r.render(s, render_progress);
+        } catch (std::exception& e) {
+            std::cout << "\033[KFAIL\n" << e.what() << std::endl;
+            std::exit(1);
+        }
+
+        std::cout << "\033[KDONE" << std::endl;
+    }
+#endif
 
     void show_scene(const Scene& scene, const Camera& camera, const ProgramOptions& options) {
         RayTraceRenderer render(
@@ -228,6 +275,8 @@ namespace hw4 {
             throw po::validation_error(po::validation_error::invalid_option_value);
         }
     }
+
+    char* argv_static[] = { "rt.wasm", "/tmp/scenes/active.scn", "-s", "1920,1920" };
 
     boost::optional<ProgramOptions> parse_options(int argc, char** argv) {
         namespace po = boost::program_options;
@@ -339,8 +388,11 @@ namespace hw4 {
         return result;
     }
 
-    extern "C" int main(int argc, char** argv) {
-        auto options = parse_options(argc, argv);
+    extern "C" void __wasm_call_ctors(void);
+
+    extern "C" int main(int argc, char** argv, char** envp) {
+        __wasm_call_ctors();
+        auto options = parse_options(sizeof(argv_static) / sizeof(*argv_static), argv_static);
 
         if (!options) {
             return 2;
@@ -350,7 +402,7 @@ namespace hw4 {
         Camera camera;
 
         std::cout << "Loading scene...";
-        wait_with_spinner(std::async([&]() {
+        wait_with_spinner([&]() {
             scene = Scene::load_scene(options->scene);
 
             auto camera_it = scene.cameras().find(options->camera);
@@ -366,17 +418,17 @@ namespace hw4 {
             }
 
             camera = camera_it->second;
-        }));
+        });
 
         std::cout << "Building mesh BVHs...";
-        wait_with_spinner(std::async([&]() {
+        wait_with_spinner([&]() {
             scene.regen_mesh_bvhs(100);
-        }));
+        });
 
         std::cout << "Building scene BVH...";
-        wait_with_spinner(std::async([&]() {
+        wait_with_spinner([&]() {
             scene.regen_bvh(100);
-        }));
+        });
 
         if (!options->no_preview) show_scene(scene, camera, *options);
         render_scene(scene, camera, *options);

@@ -1,6 +1,7 @@
 #ifndef HW4_BVH_HPP
 #define HW4_BVH_HPP
 
+#include <array>
 #include <deque>
 #include <functional>
 #include <limits>
@@ -251,7 +252,7 @@ namespace hw4 {
             size_t end,
             int bit
         ) {
-            uint64_t bitmask = 1 << bit;
+            uint64_t bitmask = 1ull << bit;
 
             while (start < end) {
                 size_t mid = start + (end - start) / 2;
